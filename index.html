@@ -46,7 +46,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .tools button:hover .tip{opacity:1;transform:rotate(-1deg)}
 
 /* stage: a canvas sketches the foam, labels float above it */
-#stage{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#stage{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #foam{position:absolute;inset:0;width:100%;height:100%}
 #world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;pointer-events:none}
 .lab{will-change:transform;position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;transition:opacity .3s}
@@ -81,6 +81,15 @@ body.pin.hasmouse #pin{display:block}
 #pin svg{width:48px;height:48px;transform-origin:24px 46px;transform:rotate(30deg);transition:transform .08s;filter:drop-shadow(2px 3px 0 rgba(43,42,47,.15))}
 #pin.stab svg{transform:rotate(30deg) translateY(6px) scale(.92)}
 
+/* typing bar: sits just above the phone keyboard */
+#editBar{position:fixed;left:10px;right:10px;bottom:10px;z-index:70;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;transform:rotate(-.4deg)}
+#editBar[hidden]{display:none}
+#editBar .k{font-size:15px;opacity:.6;white-space:nowrap}
+#editBar input{flex:1;min-width:0;font-family:"Caveat",cursive;font-weight:700;font-size:26px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed rgba(43,42,47,.5);outline:none;padding:2px 2px 0;caret-color:#2357c4}
+#editBar .btn{padding:4px 12px;font-size:17px}
+#editBar .cx{font-size:24px;opacity:.55;padding:0 4px}
+#zoomHint{position:fixed;right:12px;top:calc(76px + env(safe-area-inset-top));z-index:20;font-size:15px;padding:2px 10px;opacity:0;pointer-events:none;transition:opacity .3s}
+#zoomHint.on{opacity:.85;pointer-events:auto}
 /* backup sheet */
 .veil{position:fixed;inset:0;z-index:60;background:rgba(60,50,35,.18);display:grid;place-items:center;padding:20px}
 .veil[hidden]{display:none}
@@ -205,6 +214,8 @@ body.pin.hasmouse #pin{display:block}
   <path d="M14.3 6.6c6.3-.9 13-.8 19.3.2.6 2.6.5 5-.2 7.2-6.3.6-12.6.6-18.9-.1-.7-2.4-.8-4.8-.2-7.3z" fill="#e8635d" fill-opacity=".85"/>
   <path d="M19 9.6h4" stroke-opacity=".5"/><path d="M20 18l-.8 7M23 18l-.4 7" stroke-width="1" stroke-opacity=".5"/></svg></div>
 
+<div id="editBar" class="sk" hidden><span class="k" id="ebKind">New task</span><input id="ebInput" maxlength="120" enterkeyhint="done" autocomplete="off" autocapitalize="sentences" spellcheck="true"><button class="cx" id="ebCancel" aria-label="Cancel">×</button><button class="btn primary" id="ebDone">Done</button></div>
+<button id="zoomHint" class="sk">reset zoom</button>
 <div class="veil" id="backup" hidden>
   <div class="sheet sk" role="dialog" aria-labelledby="bkTitle" style="position:relative">
     <button class="x" id="bkClose" aria-label="Close">×</button>
@@ -427,15 +438,29 @@ function sketchWall(g){
 }
 
 /* =================== drawing =================== */
-let maxDpr=2,slowFrames=0;
+let maxDpr=2,slowFrames=0,uz=1,ux=0,uy=0;const cam={x:0,y:0};
 let view={s:1,cx:0,cy:0},cw=0,ch=0,dpr=1,geo={A:[],G:new Map(),list:[]},hover=null,editing=null,tool='cursor';
 function fitView(){
   const W=stage.clientWidth,H=stage.clientHeight;
-  let mx=CR,my=CR;
-  for(const n of live()){mx=Math.max(mx,Math.abs(n.x)+n.r);my=Math.max(my,Math.abs(n.y)+n.r)}
-  const ts=Math.max(.28,Math.min(1,(W/2-24)/mx,(H/2-70)/my));
-  view.s=Math.abs(ts-view.s)<.002?ts:view.s+(ts-view.s)*.08;view.cx=W/2;view.cy=H/2;
-  const wt=`translate(${view.cx}px,${view.cy}px) scale(${view.s.toFixed(4)})`;
+  // fit the whole cluster (not just the space around the date) and centre it
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const n of live()){x0=Math.min(x0,n.x-n.r);x1=Math.max(x1,n.x+n.r);y0=Math.min(y0,n.y-n.r);y1=Math.max(y1,n.y+n.r)}
+  const padX=phone()?28:48,padY=phone()?200:150;
+  const ts=Math.max(.28,Math.min(1,(W-padX)/(x1-x0),(H-padY)/(y1-y0)));
+  const ease=(a,b)=>a==null?b:(Math.abs(b-a)<.002?b:a+(b-a)*.08);
+  view.base=ease(view.base,ts);view.mx=ease(view.mx,(x0+x1)/2);view.my=ease(view.my,(y0+y1)/2+(phone()?0:0));
+  view.s=view.base*uz;
+  // while typing on a phone, slide the board so the bubble sits in the space above the typing bar
+  let ex=0,ey=0;
+  if(editing&&editing.bar){
+    const n=find(editing.id);
+    if(n){const r=stage.getBoundingClientRect(),vv=visualViewport,top=Math.max(r.top,vv?vv.offsetTop:0),
+      bottom=(vv?vv.offsetTop+vv.height:innerHeight)-editBar.offsetHeight-20;
+      ex=W/2-n.x*view.s-(W/2+ux-view.mx*view.s);ey=((top+bottom)/2-r.top)-n.y*view.s-(H/2+uy-view.my*view.s)}
+  }
+  cam.x+=(ex-cam.x)*.18;cam.y+=(ey-cam.y)*.18;if(Math.abs(ex-cam.x)<.3)cam.x=ex;if(Math.abs(ey-cam.y)<.3)cam.y=ey;
+  view.cx=W/2+ux+cam.x-view.mx*view.s;view.cy=H/2+uy+cam.y-view.my*view.s;
+  const wt=`translate(${view.cx.toFixed(1)}px,${view.cy.toFixed(1)}px) scale(${view.s.toFixed(4)})`;
   if(wt!==world._t){world.style.transform=wt;world._t=wt;wake(2)}    // only re-render text when the zoom really changes
   const d=Math.min(maxDpr,devicePixelRatio||1);
   if(W*d!==cw||H*d!==ch||d!==dpr){wake(2);dpr=d;cw=canvas.width=Math.round(W*d);ch=canvas.height=Math.round(H*d)}
@@ -519,7 +544,7 @@ function syncLabels(){
     const days=dayDiff(n.created,today()),age=el.firstChild;
     if(days>0){age.hidden=false;age.textContent='↻ '+days+'d';age.title='Rolled over from '+n.created}else age.hidden=true;
   }
-  hint.style.opacity=state.groups.length?0:.85;hint.style.transform=`translate(0,${CR+30}px)`;
+  hint.style.opacity=state.groups.length?0:.85;hint.style.transform=`translate(0,${center.rr+26}px)`;
 }
 /* the film flows around its words: if any edge of the text pokes outside this bubble's
    own cell of the foam, the bubble swells a little; when there is spare room it relaxes */
@@ -540,7 +565,7 @@ function fitWords(n,el,lab){
 function dropLabel(id){const el=els.get(id);if(!el)return;els.delete(id);el.animate([{opacity:1},{opacity:0}],{duration:200}).onfinish=()=>el.remove()}
 let fitVer=0;
 function paintCenter(){
-  wake(4);fitVer++;
+  wake(4);fitVer++;if(typeof paintHelp==='function')paintHelp();
   const d=new Date();
   centerLab.querySelector('.c-wk').textContent=d.toLocaleDateString(undefined,{weekday:'long'});
   centerLab.querySelector('.c-day').textContent=d.getDate();
@@ -617,11 +642,26 @@ function toGhost(n){
 
 /* =================== editing =================== */
 let justCommitted=null;
+const coarse=matchMedia('(pointer:coarse)').matches;
+const editBar=$('#editBar'),ebInput=$('#ebInput');
+function placeBar(){
+  const vv=visualViewport;const kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
+  editBar.style.bottom=(kb+8)+'px';wake(3);
+}
+if(window.visualViewport){visualViewport.addEventListener('resize',placeBar);visualViewport.addEventListener('scroll',placeBar)}
 function startEdit(id,isNew){
   wake(4);
   if(editing)commitEdit();
   const n=find(id),el=els.get(id);if(!n||!el)return;
   const lab=el.querySelector('.t');
+  if(coarse){                                   // phones: type in a bar above the keyboard, the bubble mirrors it live
+    editing={id,isNew,bar:true,t0:performance.now()};el.classList.add('editing');
+    $('#ebKind').textContent=isNew?(n.kind==='group'?'New group':'New task'):'Rename';
+    ebInput.placeholder=n.kind==='group'?'e.g. Home jobs':'e.g. Wash the car';
+    ebInput.value=n.text||'';editBar.hidden=false;$('#tools').style.visibility='hidden';placeBar();paintHelp();
+    ebInput.focus();try{ebInput.setSelectionRange(ebInput.value.length,ebInput.value.length)}catch(e){}
+    return;
+  }
   editing={id,isNew};el.classList.add('editing');
   lab.contentEditable='plaintext-only';if(lab.contentEditable!=='plaintext-only')lab.contentEditable='true';
   lab.focus();
@@ -631,10 +671,11 @@ function startEdit(id,isNew){
 function commitEdit(cancel){
   wake(6);
   if(!editing)return;
-  const {id,isNew}=editing;editing=null;
+  const editing0=editing,{id,isNew}=editing;editing=null;
   const n=find(id),el=els.get(id);if(!n||!el)return;
   justCommitted={id,t:performance.now()};
   const lab=el.querySelector('.t');
+  if(editing0.bar){lab.textContent=ebInput.value;editBar.hidden=true;$('#tools').style.visibility='';if(document.activeElement===ebInput)ebInput.blur()}
   const text=lab.textContent.replace(/\s+/g,' ').trim().slice(0,120);
   lab.contentEditable='false';el.classList.remove('editing');
   if(cancel||!text){if(isNew||!n.text){toGhost(n);paintCenter();save();return}}
@@ -642,6 +683,20 @@ function commitEdit(cancel){
   n.r=radius(n);lab.textContent=n.text;el._txt=n.text;
   getSelection().removeAllRanges();paintCenter();save();
 }
+ebInput.addEventListener('input',()=>{
+  if(!editing||!editing.bar)return;wake(4);
+  const n=find(editing.id),el=els.get(editing.id);if(!n||!el)return;
+  el.querySelector('.t').textContent=ebInput.value;n.r=radius(n,ebInput.value);
+});
+ebInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commitEdit()}if(e.key==='Escape'){e.preventDefault();commitEdit(true)}});
+let barTap=false;
+['pointerdown','mousedown','touchstart'].forEach(ev=>editBar.addEventListener(ev,()=>{barTap=true;setTimeout(()=>barTap=false,400)},{passive:true}));
+ebInput.addEventListener('blur',()=>setTimeout(()=>{
+  if(!editing||!editing.bar||barTap||document.activeElement===ebInput)return;
+  if(performance.now()-editing.t0<500){ebInput.focus();return}   // a stray event right after opening: keep typing
+  commitEdit()},120));
+$('#ebDone').addEventListener('click',()=>commitEdit());
+$('#ebCancel').addEventListener('click',()=>commitEdit(true));
 world.addEventListener('input',e=>{wake(4);if(!editing)return;const n=find(editing.id);n.r=radius(n,e.target.textContent)});
 world.addEventListener('keydown',e=>{
   if(!editing)return;
@@ -655,19 +710,70 @@ world.addEventListener('paste',e=>{e.preventDefault();document.execCommand('inse
 function toWorld(e){const r=stage.getBoundingClientRect();return [(e.clientX-r.left-view.cx)/view.s,(e.clientY-r.top-view.cy)/view.s]}
 const hit=e=>{const [x,y]=toWorld(e);const n=owner(x,y,geo);return n&&!n.dying?n:null};
 let press=null,suppress=false;
+const ptrs=new Map();let gest=null,lastTap=0;
+const zoomHint=$('#zoomHint');
+function paintZoom(){zoomHint.classList.toggle('on',uz!==1||ux!==0||uy!==0);wake(3)}
+function resetZoom(){uz=1;ux=0;uy=0;paintZoom()}
+zoomHint.addEventListener('click',resetZoom);
+function startGesture(){
+  const r=stage.getBoundingClientRect(),P=[...ptrs.values()];
+  const mx=P.reduce((a,p)=>a+p.x,0)/P.length,my=P.reduce((a,p)=>a+p.y,0)/P.length;
+  gest={n:P.length,mx,my,d:P.length>1?Math.hypot(P[0].x-P[1].x,P[0].y-P[1].y):0,uz,ux,uy,
+    wx:(mx-r.left-view.cx)/view.s,wy:(my-r.top-view.cy)/view.s,moved:false};
+}
 stage.addEventListener('pointerdown',e=>{
   if(e.target.closest('.lab.editing'))return;
-  const n=hit(e);if(!n||tool!=='cursor'||n===center||editing)return;
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  const n=hit(e);
+  // one finger on empty paper (or two fingers anywhere) moves / zooms the board
+  if(ptrs.size>1||(!n&&e.pointerType!=='mouse')||(!n&&e.pointerType==='mouse'&&e.button===0)){if(press){clearTimeout(press.t);press=null}startGesture()}
+  if(!n||tool!=='cursor'||n===center||editing||ptrs.size>1)return;
   clearTimeout(press?.t);
-  press={x:e.clientX,y:e.clientY,t:setTimeout(()=>{suppress=true;startEdit(n.id,false);press=null},550)};
+  press={x:e.clientX,y:e.clientY,id:n.id,t:setTimeout(()=>{if(press){press.long=true;n.shakeT=performance.now();wake(8)}},550)};
 });
+const endPtr=e=>{
+  ptrs.delete(e.pointerId);
+  if(gest){
+    if(!gest.moved&&gest.n===1&&!ptrs.size&&e.type==='pointerup'){       // double-tap empty paper resets the zoom
+      const now=performance.now();if(now-lastTap<320){resetZoom();lastTap=0}else lastTap=now;
+    }
+    if(gest.moved)suppress=true;
+    gest=ptrs.size?(startGesture(),gest):null;
+  }
+};
+stage.addEventListener('pointerup',endPtr);stage.addEventListener('pointercancel',endPtr);
+stage.addEventListener('wheel',e=>{                       // trackpad pinch (ctrl+wheel) zooms, two-finger scroll pans
+  e.preventDefault();const r=stage.getBoundingClientRect();
+  if(e.ctrlKey){const k=Math.exp(-e.deltaY*.01),nz=Math.max(1,Math.min(4,uz*k)),wx=(e.clientX-r.left-view.cx)/view.s,wy=(e.clientY-r.top-view.cy)/view.s;
+    uz=nz;const s2=view.base*uz;ux=e.clientX-r.left-stage.clientWidth/2-cam.x+(view.mx-wx)*s2;uy=e.clientY-r.top-stage.clientHeight/2-cam.y+(view.my-wy)*s2}
+  else{ux-=e.deltaX;uy-=e.deltaY}
+  if(uz===1&&Math.hypot(ux,uy)<4){ux=0;uy=0}paintZoom();
+},{passive:false});
 stage.addEventListener('pointermove',e=>{
+  if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(gest&&ptrs.size){
+    const r=stage.getBoundingClientRect(),P=[...ptrs.values()];
+    const mx=P.reduce((a,p)=>a+p.x,0)/P.length,my=P.reduce((a,p)=>a+p.y,0)/P.length;
+    if(Math.hypot(mx-gest.mx,my-gest.my)>8||(P.length>1))gest.moved=true;
+    if(gest.moved){
+      if(P.length>1&&gest.d){uz=Math.max(1,Math.min(4,gest.uz*Math.hypot(P[0].x-P[1].x,P[0].y-P[1].y)/gest.d))}
+      const s2=view.base*uz;ux=mx-r.left-stage.clientWidth/2-cam.x+(view.mx-gest.wx)*s2;uy=my-r.top-stage.clientHeight/2-cam.y+(view.my-gest.wy)*s2;
+      paintZoom();
+    }
+  }
   if(press&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>8){clearTimeout(press.t);press=null}
   const hv=hit(e);if(hv!==hover){hover=hv;wake()}
   stage.style.cursor=tool==='pin'?'none':tool==='erase'?'crosshair':hover?'pointer':'default';
 });
 stage.addEventListener('pointerleave',()=>{hover=null;wake()});
-['pointerup','pointercancel'].forEach(t=>addEventListener(t,()=>{if(press){clearTimeout(press.t);press=null}}));
+let longFired=0;
+// the touch that ended a long press must not go on to steal focus from the typing bar
+stage.addEventListener('touchend',e=>{if(performance.now()-longFired<150)e.preventDefault()},{passive:false});
+['pointerup','pointercancel'].forEach(t=>addEventListener(t,e=>{
+  if(!press)return;clearTimeout(press.t);
+  // a long press opens rename when the finger lifts, so phones are allowed to show the keyboard
+  if(press.long&&t==='pointerup'){suppress=true;longFired=performance.now();const id=press.id;press=null;startEdit(id,false);return}
+  press=null}));
 
 stage.addEventListener('click',e=>{
   wake(4);
@@ -770,12 +876,18 @@ const HELP={
   pin:'Tap a task bubble to pop it — it moves to Completed',
   erase:'Tap any bubble to delete it (groups take their tasks with them)'
 };
+const HELP_M={cursor:'tap the date → group · tap a group → task · hold to rename',pin:'tap a task to pop it',erase:'tap a bubble to delete it'};
+const phone=()=>innerWidth<640;
+function paintHelp(){
+  helpEl.textContent=(phone()?HELP_M:HELP)[tool];
+  helpEl.style.visibility=(editing&&editing.bar)||(!state.groups.length&&tool==='cursor')?'hidden':'';
+}
 function setTool(t){
   wake();
   if(editing)commitEdit();
   tool=t;document.body.classList.remove('pin','erase');if(t!=='cursor')document.body.classList.add(t);
   document.querySelectorAll('[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));
-  helpEl.textContent=HELP[t];stage.style.cursor=t==='pin'?'none':t==='erase'?'crosshair':'default';
+  paintHelp();stage.style.cursor=t==='pin'?'none':t==='erase'?'crosshair':'default';
 }
 $('#tools').addEventListener('click',e=>{const b=e.target.closest('[data-tool]');if(b)setTool(b.dataset.tool)});
 function paintSound(){$('#soundBtn').setAttribute('aria-pressed',state.sound);$('#wave').style.display=state.sound?'':'none'}
@@ -888,6 +1000,8 @@ if(state.lastOpen&&state.lastOpen!==today()&&(state.tasks.length||state.groups.l
   setTimeout(()=>toast(`☀️ New day — ${n} bubble${n>1?'s':''} rolled over from ${days===1?'yesterday':days+' days ago'}`),600);
 }
 save();
+
+addEventListener('resize',()=>{wake(4);paintHelp()});
 
 /* =================== backup & restore =================== */
 const bk=$('#backup'),bkMsg=$('#bkMsg');
