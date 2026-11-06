@@ -82,10 +82,10 @@ body.pin.hasmouse #pin{display:block}
 #pin.stab svg{transform:rotate(30deg) translateY(6px) scale(.92)}
 
 /* typing bar: sits just above the phone keyboard */
-#editBar{position:fixed;left:10px;right:10px;bottom:10px;z-index:70;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;transform:rotate(-.4deg)}
+#editBar{position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:70;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;transform:rotate(-.4deg)}
 #editBar[hidden]{display:none}
 #editBar .k{font-size:15px;opacity:.6;white-space:nowrap}
-#editBar input{flex:1;min-width:0;font-family:"Caveat",cursive;font-weight:700;font-size:26px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed rgba(43,42,47,.5);outline:none;padding:2px 2px 0;caret-color:#2357c4}
+#editBar textarea{flex:1;min-width:0;resize:none;overflow:hidden;height:38px;line-height:34px;white-space:nowrap;font-family:"Caveat",cursive;font-weight:700;font-size:26px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed rgba(43,42,47,.5);outline:none;padding:2px 2px 0;caret-color:#2357c4}
 #editBar .btn{padding:4px 12px;font-size:17px}
 #editBar .cx{font-size:24px;opacity:.55;padding:0 4px}
 #zoomHint{position:fixed;right:12px;top:calc(76px + env(safe-area-inset-top));z-index:20;font-size:15px;padding:2px 10px;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -214,7 +214,7 @@ body.pin.hasmouse #pin{display:block}
   <path d="M14.3 6.6c6.3-.9 13-.8 19.3.2.6 2.6.5 5-.2 7.2-6.3.6-12.6.6-18.9-.1-.7-2.4-.8-4.8-.2-7.3z" fill="#e8635d" fill-opacity=".85"/>
   <path d="M19 9.6h4" stroke-opacity=".5"/><path d="M20 18l-.8 7M23 18l-.4 7" stroke-width="1" stroke-opacity=".5"/></svg></div>
 
-<div id="editBar" class="sk" hidden><span class="k" id="ebKind">New task</span><input id="ebInput" maxlength="120" enterkeyhint="done" autocomplete="off" autocapitalize="sentences" spellcheck="true"><button class="cx" id="ebCancel" aria-label="Cancel">×</button><button class="btn primary" id="ebDone">Done</button></div>
+<div id="editBar" class="sk" hidden><span class="k" id="ebKind">New task</span><textarea id="ebInput" rows="1" maxlength="120" enterkeyhint="done" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" aria-label="Bubble text"></textarea><button class="cx" id="ebCancel" aria-label="Cancel">×</button><button class="btn primary" id="ebDone">Done</button></div>
 <button id="zoomHint" class="sk">reset zoom</button>
 <div class="veil" id="backup" hidden>
   <div class="sheet sk" role="dialog" aria-labelledby="bkTitle" style="position:relative">
@@ -454,8 +454,9 @@ function fitView(){
   let ex=0,ey=0;
   if(editing&&editing.bar){
     const n=find(editing.id);
-    if(n){const r=stage.getBoundingClientRect(),vv=visualViewport,top=Math.max(r.top,vv?vv.offsetTop:0),
-      bottom=(vv?vv.offsetTop+vv.height:innerHeight)-editBar.offsetHeight-20;
+    // centre it between the typing bar (top) and the keyboard (bottom of the visible screen)
+    if(n){const r=stage.getBoundingClientRect(),vv=visualViewport,top=editBar.getBoundingClientRect().bottom+10,
+      bottom=(vv?vv.offsetTop+vv.height:innerHeight)-14;
       ex=W/2-n.x*view.s-(W/2+ux-view.mx*view.s);ey=((top+bottom)/2-r.top)-n.y*view.s-(H/2+uy-view.my*view.s)}
   }
   cam.x+=(ex-cam.x)*.18;cam.y+=(ey-cam.y)*.18;if(Math.abs(ex-cam.x)<.3)cam.x=ex;if(Math.abs(ey-cam.y)<.3)cam.y=ey;
@@ -645,10 +646,13 @@ let justCommitted=null;
 const coarse=matchMedia('(pointer:coarse)').matches;
 const editBar=$('#editBar'),ebInput=$('#ebInput');
 function placeBar(){
-  const vv=visualViewport;const kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
-  editBar.style.bottom=(kb+8)+'px';wake(3);
+  // undo any page scroll iOS makes when the keyboard opens, so the tabs and board stay put
+  if(scrollX||scrollY)scrollTo(0,0);
+  if(document.scrollingElement&&document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
+  wake(3);
 }
 if(window.visualViewport){visualViewport.addEventListener('resize',placeBar);visualViewport.addEventListener('scroll',placeBar)}
+addEventListener('scroll',()=>{if(editing&&editing.bar)placeBar()},{passive:true});
 function startEdit(id,isNew){
   wake(4);
   if(editing)commitEdit();
@@ -659,7 +663,8 @@ function startEdit(id,isNew){
     $('#ebKind').textContent=isNew?(n.kind==='group'?'New group':'New task'):'Rename';
     ebInput.placeholder=n.kind==='group'?'e.g. Home jobs':'e.g. Wash the car';
     ebInput.value=n.text||'';editBar.hidden=false;$('#tools').style.visibility='hidden';placeBar();paintHelp();
-    ebInput.focus();try{ebInput.setSelectionRange(ebInput.value.length,ebInput.value.length)}catch(e){}
+    ebInput.focus({preventScroll:true});try{ebInput.setSelectionRange(ebInput.value.length,ebInput.value.length)}catch(e){}
+    setTimeout(placeBar,60);setTimeout(placeBar,350);
     return;
   }
   editing={id,isNew};el.classList.add('editing');
@@ -684,6 +689,7 @@ function commitEdit(cancel){
   getSelection().removeAllRanges();paintCenter();save();
 }
 ebInput.addEventListener('input',()=>{
+  if(ebInput.value.includes('\n'))ebInput.value=ebInput.value.replace(/\n+/g,' ');
   if(!editing||!editing.bar)return;wake(4);
   const n=find(editing.id),el=els.get(editing.id);if(!n||!el)return;
   el.querySelector('.t').textContent=ebInput.value;n.r=radius(n,ebInput.value);
@@ -693,7 +699,7 @@ let barTap=false;
 ['pointerdown','mousedown','touchstart'].forEach(ev=>editBar.addEventListener(ev,()=>{barTap=true;setTimeout(()=>barTap=false,400)},{passive:true}));
 ebInput.addEventListener('blur',()=>setTimeout(()=>{
   if(!editing||!editing.bar||barTap||document.activeElement===ebInput)return;
-  if(performance.now()-editing.t0<500){ebInput.focus();return}   // a stray event right after opening: keep typing
+  if(performance.now()-editing.t0<500){ebInput.focus({preventScroll:true});return}   // a stray event right after opening: keep typing
   commitEdit()},120));
 $('#ebDone').addEventListener('click',()=>commitEdit());
 $('#ebCancel').addEventListener('click',()=>commitEdit(true));

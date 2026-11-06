@@ -1,6 +1,6 @@
 // Bubble Day service worker: keeps the app working offline.
 // Bump VERSION whenever index.html changes so phones pick up the new copy.
-const VERSION = 'bubble-day-v2';
+const VERSION = 'bubble-day-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
