@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bubble Day</title>
+<meta name="theme-color" content="#f8f6f0">
+<meta name="description" content="A pencil-sketched daily to-do list made of bubbles.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bubble Day">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b2a2f;--paper:#f8f6f0;--hi:rgba(255,213,74,.55)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:"Patrick Hand","Caveat",cursive,system-ui;color:var(--ink);background:var(--paper)}
+body{background-color:var(--paper);background-image:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .28 0 0 0 0 .2 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .34 -.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E"),
+  radial-gradient(ellipse at 6% 94%,rgba(140,105,60,.14),transparent 32%),
+  radial-gradient(ellipse 120% 105% at 50% 50%,rgba(255,255,255,.35) 30%,transparent 62%,rgba(125,100,65,.22) 100%);
+  background-size:260px 260px,1600px 1600px,100% 100%,100% 100%}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.sk{border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:#fbf8ef;box-shadow:2px 3px 0 rgba(43,42,47,.14)}
+
+/* top bar */
+.top{position:fixed;top:0;left:0;right:0;height:calc(64px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:center;z-index:30;padding-top:env(safe-area-inset-top)}
+.tabs{display:flex;gap:6px;padding:4px 8px}
+.tabs button{padding:4px 14px;font-size:20px;opacity:.7;position:relative}
+.tabs button.on{opacity:1;background:linear-gradient(176deg,transparent 52%,var(--hi) 53%,var(--hi) 88%,transparent 90%)}
+.tabs .n{display:inline-block;min-width:22px;margin-left:6px;padding:0 6px;font-size:15px;border:1.5px solid var(--ink);border-radius:50% 45% 55% 48%/52% 50% 48% 50%}
+
+/* tools */
+.tools{position:fixed;left:14px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;padding:8px}
+.tools button{width:48px;height:48px;display:grid;place-items:center;opacity:.75;position:relative;border-radius:50%}
+.tools button svg{width:28px;height:28px}
+.tools button:hover{opacity:1}
+.tools button[aria-pressed=true]{opacity:1;background:radial-gradient(ellipse 60% 55% at 50% 55%,var(--hi) 0 70%,transparent 72%)}
+.tools .sep{height:0;border-top:1.5px dashed rgba(43,42,47,.45);margin:2px 8px}
+.tools button .tip{position:absolute;left:60px;white-space:nowrap;background:#fffbe8;border:1.5px solid var(--ink);padding:2px 10px;border-radius:12px 4px 12px 4px;font-size:16px;opacity:0;pointer-events:none;transition:.15s;transform:translateX(-4px) rotate(-1deg)}
+.tools button:hover .tip{opacity:1;transform:rotate(-1deg)}
+
+/* stage: a canvas sketches the foam, labels float above it */
+#stage{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#foam{position:absolute;inset:0;width:100%;height:100%}
+#world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;pointer-events:none}
+.lab{will-change:transform;position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;transition:opacity .3s}
+.lab .t{font-family:"Caveat",cursive;font-weight:700;line-height:1.02;outline:none;overflow-wrap:normal;hyphens:manual;max-width:none;min-width:1ch;color:var(--ink);
+  text-shadow:0 0 3px var(--paper),0 0 6px var(--paper);caret-color:#2357c4}
+.lab.group .t{font-size:27px}
+.lab.task .t{font-size:22px;font-weight:600}
+.lab .t:empty::before{content:attr(data-ph);opacity:.45}
+.lab.editing{pointer-events:auto}
+.lab.editing .t{cursor:text}
+.age{font-size:14px;padding:0 6px;margin-bottom:2px;border:1.5px solid rgba(43,42,47,.7);border-radius:50% 42% 55% 45%/55% 48% 52% 45%;white-space:nowrap;transform:rotate(-4deg);background:rgba(251,248,239,.8)}
+.age[hidden]{display:none}
+.c-wrap{display:flex;flex-direction:column;align-items:center;line-height:1;font-family:"Caveat",cursive;text-shadow:0 0 4px var(--paper),0 0 8px var(--paper)}
+.c-wk{font-size:30px;font-weight:700}
+.c-day{font-size:84px;font-weight:700;margin:-4px 0 -6px}
+.c-mo{font-size:25px;font-weight:600}
+.c-stat{font-family:"Patrick Hand",cursive;font-size:16px;opacity:.7;margin-top:6px}
+.hint{position:absolute;width:300px;margin-left:-150px;text-align:center;font-family:"Caveat",cursive;font-size:26px;font-weight:600;opacity:.8;pointer-events:none;transition:opacity .4s}
+.popfx{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+
+.mug{position:fixed;top:10px;right:22px;width:185px;height:185px;pointer-events:none;z-index:1;transform:rotate(6deg);opacity:.85}
+.mug .steam{stroke-dasharray:6 7;animation:steam 3.5s linear infinite}
+.mug .steam:nth-of-type(2){animation-duration:4.2s}
+@keyframes steam{to{stroke-dashoffset:-26}}
+@media (max-width:640px){.mug{width:78px;height:78px;top:58px;right:8px;opacity:.6}}
+@media (prefers-reduced-motion:reduce){.mug .steam{animation:none}}
+#help{position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:17px;opacity:.6;pointer-events:none;z-index:5;padding:0 80px}
+
+/* pin */
+#pin{position:fixed;left:0;top:0;width:48px;height:48px;z-index:40;pointer-events:none;display:none;will-change:transform}
+body.pin.hasmouse #pin{display:block}
+#pin svg{width:48px;height:48px;transform-origin:24px 46px;transform:rotate(30deg);transition:transform .08s;filter:drop-shadow(2px 3px 0 rgba(43,42,47,.15))}
+#pin.stab svg{transform:rotate(30deg) translateY(6px) scale(.92)}
+
+/* backup sheet */
+.veil{position:fixed;inset:0;z-index:60;background:rgba(60,50,35,.18);display:grid;place-items:center;padding:20px}
+.veil[hidden]{display:none}
+.sheet{width:min(440px,100%);padding:18px 20px 16px;transform:rotate(-.6deg);max-height:90vh;overflow:auto}
+.sheet h2{margin:0 0 4px;font-family:"Caveat",cursive;font-size:34px;line-height:1}
+.sheet p{margin:4px 0 12px;font-size:17px;opacity:.75;line-height:1.25}
+.sheet h3{margin:14px 0 6px;font-size:19px}
+.sheet .row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-size:18px;padding:6px 14px;border:2px solid var(--ink);border-radius:255px 14px 225px 14px/14px 225px 14px 255px;background:#fffdf6}
+.btn:hover,.btn:focus-visible{background:var(--hi)}
+.btn.primary{background:var(--hi)}
+.sheet textarea{width:100%;height:86px;margin-top:8px;font:14px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:rgba(255,255,255,.7);border:1.5px dashed rgba(43,42,47,.55);border-radius:8px;padding:8px;resize:vertical}
+.sheet .x{position:absolute;right:12px;top:8px;font-size:26px;opacity:.6}
+.sheet .msg{min-height:22px;margin-top:8px;font-size:17px}
+/* toast: a taped paper note */
+#toast{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translate(-50%,20px) rotate(-1.2deg);opacity:0;z-index:50;background:#fffbe6;border:2px solid var(--ink);
+  border-radius:14px 4px 16px 4px/4px 16px 4px 14px;padding:10px 18px;font-size:19px;display:flex;gap:14px;align-items:center;transition:.3s;pointer-events:none;max-width:90vw;box-shadow:3px 4px 0 rgba(43,42,47,.14)}
+#toast::before{content:"";position:absolute;left:50%;top:-12px;width:70px;height:22px;margin-left:-35px;background:rgba(222,208,170,.75);transform:rotate(-3deg);border-left:1px dashed rgba(0,0,0,.12);border-right:1px dashed rgba(0,0,0,.12)}
+#toast.show{opacity:1;transform:translate(-50%,0) rotate(-1.2deg);pointer-events:auto}
+#toast button{font-weight:700;text-decoration:underline;text-decoration-style:wavy;text-underline-offset:4px;color:#2357c4}
+
+/* completed view: a notebook page */
+#doneView{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:auto;z-index:10;padding:14px 18px 60px}
+#doneView[hidden]{display:none}
+.dwrap{max-width:720px;margin:0 auto;padding:20px 22px 30px 64px;position:relative;
+  background:linear-gradient(90deg,transparent 46px,rgba(214,70,70,.45) 46px,rgba(214,70,70,.45) 48px,transparent 48px),repeating-linear-gradient(#fdfaf2 0 33px,rgba(70,110,190,.22) 33px 34px);
+  border:1.5px solid rgba(43,42,47,.5);border-radius:3px 6px 4px 8px;box-shadow:3px 5px 0 rgba(43,42,47,.12),0 10px 30px rgba(90,70,40,.15);transform:rotate(-.4deg)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.stat{padding:8px;text-align:center;border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:rgba(255,255,255,.5)}
+.stat:nth-child(2){transform:rotate(.8deg)}.stat:nth-child(3){transform:rotate(-.6deg)}
+.stat b{display:block;font-family:"Caveat",cursive;font-size:40px;line-height:1}
+.stat span{font-size:16px;opacity:.75}
+.week{display:flex;gap:10px;align-items:flex-end;height:96px;padding:10px 12px 4px;margin-bottom:22px;border-bottom:2px solid var(--ink)}
+.week div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;font-size:15px}
+.week i{display:block;width:62%;max-width:28px;min-height:3px;border:1.6px solid var(--ink);border-bottom:0;border-radius:3px 6px 0 0;
+  background:repeating-linear-gradient(45deg,rgba(43,42,47,.75) 0 1.3px,transparent 1.3px 5px)}
+.week div.t{font-weight:700}
+.week div.t i{background:repeating-linear-gradient(45deg,rgba(43,42,47,.8) 0 1.3px,transparent 1.3px 5px),var(--hi)}
+.day{margin-bottom:20px}
+.day h3{margin:0 0 4px;font-family:"Caveat",cursive;font-size:30px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
+.day h3 span{opacity:.6;font-family:"Patrick Hand",cursive;font-size:17px;font-weight:400}
+.item{display:flex;align-items:center;gap:12px;min-height:34px;padding:2px 0;animation:fadein .4s both}
+@keyframes fadein{from{opacity:0;transform:translateX(-6px)}}
+.tick{flex:none;width:30px;font-family:"Caveat",cursive;font-size:32px;font-weight:700;line-height:1;color:hsl(var(--h),45%,34%);text-align:center}
+.item .tx{flex:1;min-width:0;overflow-wrap:anywhere;font-family:"Caveat",cursive;font-size:25px;font-weight:600;line-height:1.05}
+.chip{font-family:"Patrick Hand",cursive;font-size:14px;padding:0 8px;margin-left:6px;display:inline-block;color:hsl(var(--h),45%,32%);border:1.5px solid hsl(var(--h),40%,40%);border-radius:50% 42% 55% 45%/55% 48% 52% 45%;vertical-align:3px}
+.when{font-size:15px;opacity:.6;white-space:nowrap}
+.item .undo{opacity:.55;padding:2px 8px;font-size:20px}
+.item .undo:hover{opacity:1}
+.empty{text-align:center;opacity:.8;padding:40px 10px;font-family:"Caveat",cursive;font-size:28px;line-height:1.2;white-space:pre-line}
+
+@media (max-width:640px){
+  .tools{left:50%;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);flex-direction:row}
+  .tools .sep{width:0;height:auto;border-top:0;border-left:1.5px dashed rgba(43,42,47,.45);margin:8px 2px}
+  .tools button .tip{display:none}
+  #help{bottom:calc(86px + env(safe-area-inset-bottom));padding:0 20px;font-size:15px}
+  #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
+  .dwrap{padding:14px 12px 24px 54px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav class="tabs sk">
+    <button data-tab="bubbles" class="on">Bubbles</button>
+    <button data-tab="done">Completed<span class="n" id="doneCount">0</span></button>
+  </nav>
+</header>
+
+<aside class="tools sk" id="tools">
+  <button data-tool="cursor" aria-pressed="true" aria-label="Cursor">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 7-6 2-2 6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="tip">Cursor · V</span></button>
+  <button data-tool="pin" aria-pressed="false" aria-label="Pin: pop bubbles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l-1 6 3 3H7l3-3z"/><path d="M12 12v9"/></svg><span class="tip">Pin – pop bubbles · P</span></button>
+  <button data-tool="erase" aria-pressed="false" aria-label="Delete">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg><span class="tip">Delete bubble · X</span></button>
+  <div class="sep"></div>
+  <button id="soundBtn" aria-pressed="true" aria-label="Sound">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg><span class="tip">Pop sound</span></button>
+  <button id="backupBtn" aria-label="Backup &amp; restore">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5l7.5-4 7.5 4v8l-7.5 4-7.5-4z"/><path d="M4.5 8.5l7.5 4 7.5-4M12 12.5v8"/></svg><span class="tip">Backup &amp; restore</span></button>
+</aside>
+
+<main id="stage"><canvas id="foam"></canvas><div id="world"></div></main>
+<div id="help"></div>
+<svg class="mug" viewBox="0 0 150 155" overflow="visible" fill="none" stroke="#2b2a2f" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <defs><pattern id="mh" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v5" stroke="#2b2a2f" stroke-width="1" stroke-opacity=".35"/></pattern></defs>
+  <!-- coffee ring left on the paper where the mug stood before -->
+  <circle cx="34" cy="128" r="22" stroke="#8c6437" stroke-opacity=".16" stroke-width="5"/>
+  <circle cx="34.5" cy="127.5" r="22.5" stroke="#8c6437" stroke-opacity=".22" stroke-width="1.3"/>
+  <path d="M14 136c-2-3-3-6-3-9" stroke="#8c6437" stroke-opacity=".2" stroke-width="2.5"/>
+  <!-- steam -->
+  <path class="steam" d="M58 40c-7-8 6-12-1-21s4-12 1-17" stroke-width="1.6" stroke-opacity=".55"/>
+  <path class="steam" d="M78 42c-6-9 7-12 0-22s5-11 2-16" stroke-width="1.6" stroke-opacity=".5"/>
+  <!-- body, drawn twice for a pencil feel -->
+  <path d="M33 56c1 22 2 44 6 64 2 9 13 14 30 14s28-5 30-14c4-20 5-42 6-64" stroke-width="2.2" fill="#fbf9f3" fill-opacity=".7"/>
+  <path d="M34.5 58c.6 21 2.4 42 6 61.5 2.4 8 13 12.7 28.6 12.6 16-.2 26.3-4.7 28.2-13.2 3.6-19.5 5-40.5 5.6-61" stroke-width="1" stroke-opacity=".45"/>
+  <!-- shading on the right side -->
+  <path d="M86 62c-.5 21-2 40-5 58 7-2 12-4 13-8 3-17 4.5-34 5.2-52z" fill="url(#mh)" stroke="none"/>
+  <!-- rim + coffee -->
+  <ellipse cx="69" cy="56" rx="36" ry="9" stroke-width="2.2" fill="#fbf9f3"/>
+  <path d="M35.5 55.5c4 5.5 18 8.5 34 8.4 15-.1 28.8-3.3 33.8-8.6" stroke-width="1" stroke-opacity=".45"/>
+  <ellipse cx="69" cy="57.5" rx="29" ry="5.6" stroke-width="1.3" fill="url(#mh)"/>
+  <!-- handle -->
+  <path d="M104 70c14-4 24 2 23 15-1 14-12 21-26 22" stroke-width="2.2"/>
+  <path d="M103 79c9-3 15 1 14.5 7.5-.6 7-6.5 11-15 12" stroke-width="1.8"/>
+  <path d="M105 72c12-3 20 3 19.5 13.5" stroke-width="1" stroke-opacity=".45"/>
+  <!-- a little doodle on the mug -->
+  <path d="M55 92c4-7 12-7 14 0 2-7 10-7 14 0-2 8-14 15-14 15s-12-7-14-15z" stroke-width="1.4" stroke-opacity=".7"/>
+  <!-- base shadow scribble -->
+  <path d="M38 138c16 4 46 4 64-1" stroke-width="1.2" stroke-opacity=".35"/>
+</svg>
+
+
+<section id="doneView" hidden><div class="dwrap" id="doneInner"></div></section>
+
+
+<div id="pin"><svg viewBox="0 0 48 48" fill="none" stroke="#2b2a2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M24 46.5V30.5"/><path d="M23.4 45l1.2-14"/>
+  <path d="M12.5 27.8c7-1.6 16-1.4 23 .2" fill="#e8635d" fill-opacity=".8"/>
+  <path d="M16.2 26.6l2.4-12.8h11l2.4 12.7" fill="#e8635d" fill-opacity=".8"/>
+  <path d="M14.3 6.6c6.3-.9 13-.8 19.3.2.6 2.6.5 5-.2 7.2-6.3.6-12.6.6-18.9-.1-.7-2.4-.8-4.8-.2-7.3z" fill="#e8635d" fill-opacity=".85"/>
+  <path d="M19 9.6h4" stroke-opacity=".5"/><path d="M20 18l-.8 7M23 18l-.4 7" stroke-width="1" stroke-opacity=".5"/></svg></div>
+
+<div class="veil" id="backup" hidden>
+  <div class="sheet sk" role="dialog" aria-labelledby="bkTitle" style="position:relative">
+    <button class="x" id="bkClose" aria-label="Close">×</button>
+    <h2 id="bkTitle">Backup &amp; restore</h2>
+    <p>Your bubbles live on this device. Save a backup here, then restore it on your phone (or anywhere else).</p>
+    <h3>Save a backup</h3>
+    <div class="row"><button class="btn primary" id="bkDownload">Download file</button><button class="btn" id="bkCopy">Copy as text</button></div>
+    <h3>Restore</h3>
+    <div class="row"><button class="btn" id="bkPick">Choose a file…</button><input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden></div>
+    <textarea id="bkText" placeholder="…or paste backup text here" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="bkRestore">Restore from text</button></div>
+    <div class="msg" id="bkMsg" role="status"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(()=>{
+const KEY='bubble-day-v1';
+const CR=128;                                   // radius of the date bubble (world units)
+const HUES=[205,330,150,35,265,5,175,90];
+const TAU=Math.PI*2;
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=s=>document.querySelector(s);
+const stage=$('#stage'),canvas=$('#foam'),ctx=canvas.getContext('2d'),world=$('#world'),helpEl=$('#help'),toastEl=$('#toast');
+
+/* =================== state =================== */
+const TRANSIENT=new Set(['vx','vy','rr','rr0','rv','phase','rot','spin','lx','ly','cx','cy','re','shakeT','dying','_fv','_budget','_in','_seed']);
+let state=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.groups)return s}catch(e){}
+  return {groups:[],tasks:[],done:[],lastOpen:null,sound:true};
+}
+let saveBlocked=false;
+function save(){if(saveBlocked)return;try{state.lastOpen=today();localStorage.setItem(KEY,JSON.stringify(state,(k,v)=>TRANSIENT.has(k)?undefined:v))}catch(e){}}
+const uid=()=>Math.random().toString(36).slice(2,9);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=()=>ymd(new Date());
+const dayDiff=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5);
+
+const center={id:'center',kind:'center',x:0,y:0,r:CR,rr:CR,rr0:CR,fixed:true,hue:265,phase:0,rot:.7,spin:70000};
+let ghosts=[];                                 // bubbles shrinking away after delete/cancel
+function prep(n,grow){
+  n.vx=0;n.vy=0;n.rv=0;n.r=radius(n);n.rr0=grow?3:n.r;n.rr=n.rr0;
+  n.phase=Math.random()*TAU;n.rot=Math.random()*TAU;n.spin=(45+Math.random()*50)*1000;
+  n.lx=n.cx=n.x;n.ly=n.cy=n.y;n.re=n.r*.7;
+}
+function radius(n,txt){
+  const len=(txt??n.text??'').length;
+  let kids=0,big=0;
+  if(n.kind==='group'&&n.id)for(const t of state.tasks)if(t.gid===n.id){kids++;big=Math.max(big,t.r||0)}
+  const grow=72+9*Math.min(kids,10);                      // a group inflates with every task it holds
+  const min=n.kind==='group'?Math.max(grow,big*.85):52,f=n.kind==='group'?300:250;
+  const base=Math.min(n.kind==='group'?Math.max(130,min):130,Math.max(min,1.22*Math.sqrt(Math.max(len,6)*f/Math.PI)));
+  return Math.round(Math.min(230,base+(n.boost||0)));   // boost = extra swell so the words fit
+}
+function normalise(){
+  state.groups.forEach(g=>{g.kind='group';g.parent='center'});
+  state.tasks.forEach(t=>{t.kind='task';if(!(t.parent&&(t.parent===t.gid||state.tasks.some(x=>x.id===t.parent&&x.gid===t.gid))))t.parent=t.gid;if(t.hue==null)t.hue=(state.groups.find(g=>g.id===t.gid)||{hue:200}).hue});
+}
+normalise();[...state.groups,...state.tasks].forEach(n=>prep(n));
+queueMicrotask(()=>{rebalance();save()});
+
+const live=()=>[center,...state.groups,...state.tasks];
+const simNodes=()=>[center,...state.groups,...state.tasks,...ghosts];
+const find=id=>id==='center'?center:(state.groups.find(g=>g.id===id)||state.tasks.find(t=>t.id===id));
+const groupOf=t=>state.groups.find(g=>g.id===t.gid);
+const linked=(a,b)=>a.parent===b.id||b.parent===a.id;
+
+/* =================== bubble physics ===================
+   Two soap bubbles that touch merge into a "double bubble". Plateau's laws say the
+   three films meet at 120°, which puts the centres at d² = r1² + r2² − r1·r2 apart,
+   with a shared wall of radius r1·r2/(r2 − r1) that bulges into the bigger bubble.  */
+const plateau=(a,b)=>Math.sqrt(a*a+b*b-a*b);
+let motion=1,wakeN=10;const wake=(n=3)=>{wakeN=Math.max(wakeN,n)};
+function step(t){
+  const A=simNodes();
+  for(const n of A){
+    if(n.fixed){                                      // the date bubble keeps pace with the biggest group
+      let big=0;for(const g of state.groups)big=Math.max(big,g.r);
+      n.r=Math.max(CR,Math.round(big*.95));n.rv=((n.rv||0)+(n.r-n.rr)*.07)*.78;n.rr=Math.max(CR*.5,n.rr+n.rv);n.rr0=n.rr;
+      motion=Math.max(motion,Math.abs(n.rv));continue}
+    if(!n.dying){                                   // groups inflate with tasks; all bubbles swell to fit words
+      const ed=editing&&editing.id===n.id;
+      n.r=radius(n,ed?els.get(n.id)?.querySelector('.t')?.textContent:undefined);
+    }
+    const tg=n.dying?0:n.r;
+    n.rv=(n.rv+(tg-n.rr0)*.07)*.78;n.rr0=Math.max(0,n.rr0+n.rv);   // springy growth = budding
+    n.rr=n.rr0;
+    motion=Math.max(motion,Math.abs(n.rv));
+  }
+  ghosts=ghosts.filter(g=>g.rr0>1);
+  for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){
+    const a=A[i],b=A[j],ra=a.rr,rb=b.rr;if(ra<.5||rb<.5)continue;
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+    if(d<.01){dx=Math.random()-.5;dy=Math.random()-.5;d=Math.hypot(dx,dy)}
+    const ux=dx/d,uy=dy/d,dp=plateau(ra,rb);
+    let target,k;
+    if(linked(a,b)){target=dp;k=.03}                     // parent & child: full double-bubble merge
+    else{target=ra+rb-4;if(d>=target)continue;k=.035}       // unrelated bubbles just touch
+    const f=(d-target)*k;
+    const ma=a.fixed?0:1/(ra*ra),mb=b.fixed?0:1/(rb*rb),mt=ma+mb;if(!mt)continue;
+    a.vx+=ux*f*ma/mt;a.vy+=uy*f*ma/mt;b.vx-=ux*f*mb/mt;b.vy-=uy*f*mb/mt;
+  }
+  for(const n of A){
+    if(n.fixed)continue;
+    if(n.shakeT&&t-n.shakeT<420)n.vx+=Math.sin((t-n.shakeT)/22)*1.6;
+    n.vx*=.76;n.vy*=.76;n.x+=n.vx;n.y+=n.vy;motion=Math.max(motion,Math.abs(n.vx)+Math.abs(n.vy));
+  }
+}
+
+/* -------- merge geometry -------- */
+function pairGeom(a,b){
+  const ra=a.rr,rb=b.rr,dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+  if(d>=ra+rb-.3||d<=Math.abs(ra-rb)+.3)return null;
+  const s=ra<=rb?a:b,L=s===a?b:a,rs=s.rr,rL=L.rr;
+  const ux=(L.x-s.x)/d,uy=(L.y-s.y)/d;
+  const xs=(d*d+rs*rs-rL*rL)/(2*d),h=Math.sqrt(Math.max(0,rs*rs-xs*xs));
+  const mx=s.x+ux*xs,my=s.y+uy*xs;
+  const g={a,b,s,L,ux,uy,mx,my,h,p1x:mx-uy*h,p1y:my+ux*h,p2x:mx+uy*h,p2y:my-ux*h};
+  const dr=rL-rs;let r3=dr>.01?rs*rL/dr:Infinity;
+  g.line=r3>4000;
+  if(!g.line){if(r3<h*1.001)r3=h*1.001;const off=xs-Math.sqrt(r3*r3-h*h);g.wx=s.x+ux*off;g.wy=s.y+uy*off;g.r3=r3}
+  return g;
+}
+function computeGeo(A){
+  const G=new Map(),list=[];A.forEach(n=>G.set(n,[]));
+  for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){
+    const g=pairGeom(A[i],A[j]);if(g){list.push(g);G.get(A[i]).push(g);G.get(A[j]).push(g)}
+  }
+  return {A,G,list};
+}
+const other=(g,n)=>g.a===n?g.b:g.a;
+function onSide(g,n,px,py){         // is point on n's side of the shared wall?
+  const sSide=g.line?((px-g.mx)*g.ux+(py-g.my)*g.uy)<=0:Math.hypot(px-g.wx,py-g.wy)<=g.r3;
+  return n===g.s?sSide:!sSide;
+}
+const ownerBuf=[];let ownerStamp=0;
+function owner(px,py,geo){
+  const c=ownerBuf;c.length=0;
+  for(const n of geo.A)if(n.rr>1&&(px-n.x)**2+(py-n.y)**2<n.rr*n.rr){c.push(n);n._in=ownerStamp+1}
+  ownerStamp++;
+  if(c.length<2)return c[0]||null;
+  for(const n of c){
+    let ok=true;
+    for(const g of geo.G.get(n)){if(other(g,n)._in===ownerStamp&&!onSide(g,n,px,py)){ok=false;break}}
+    if(ok)return n;
+  }
+  return c.reduce((m,n)=>((px-n.x)**2+(py-n.y)**2-n.rr*n.rr)<((px-m.x)**2+(py-m.y)**2-m.rr*m.rr)?n:m);
+}
+function clipSide(g,n,bx,by,bh){       // clip to n's side of wall g, within the box (bx,by)±bh
+  ctx.beginPath();
+  if(g.line){
+    const sg=n===g.s?1:-1,B=Math.hypot(bx-g.mx,by-g.my)+bh*1.5,tx=-g.uy,ty=g.ux,nx=g.ux*sg,ny=g.uy*sg;
+    ctx.moveTo(g.mx+tx*B,g.my+ty*B);ctx.lineTo(g.mx+tx*B-nx*B,g.my+ty*B-ny*B);
+    ctx.lineTo(g.mx-tx*B-nx*B,g.my-ty*B-ny*B);ctx.lineTo(g.mx-tx*B,g.my-ty*B);ctx.closePath();ctx.clip();
+  }else if(n===g.s){ctx.arc(g.wx,g.wy,g.r3,0,TAU);ctx.clip()}
+  else{ctx.rect(bx-bh,by-bh,2*bh,2*bh);ctx.moveTo(g.wx+g.r3,g.wy);ctx.arc(g.wx,g.wy,g.r3,0,TAU);ctx.clip('evenodd')}
+}
+
+/* =================== pencil sketch helpers =================== */
+const INK='43,42,47';
+const hueOf=n=>n.kind==='task'?(groupOf(n)?.hue??n.hue??200):n.hue;
+function seedOf(n){if(n._seed==null){let h=2166136261;for(const c of String(n.id))h=Math.imul(h^c.charCodeAt(0),16777619);n._seed=(h>>>0)/4294967295}return n._seed}
+const rnd=(a,b)=>{const x=Math.sin(a*127.1+b*311.7)*43758.5453;return x-Math.floor(x)};   // stable pseudo-random
+// one wobbly hand-drawn circle stroke: stable per bubble, overshoots where the pencil starts and ends
+function sketchRing(x,y,r,seed,pass,width,alpha,col){
+  const p1=seed*44+pass*1.7,p2=seed*91+pass*2.9,p3=seed*13+pass*.7,amp=1+r*.014;
+  const a0=(seed*7+pass*2.4)%1*TAU,sweep=TAU*(1.05+rnd(seed,pass)*.09),N=Math.max(30,Math.round(r*.5));
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){
+    const a=a0+sweep*i/N,rr=r+(Math.sin(a*2+p1)*.9+Math.sin(a*3+p2)*.55+Math.sin(a*5+p3)*.3)*amp+(pass-.6)*.9;
+    const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+  }
+  ctx.strokeStyle=`rgba(${col||INK},${alpha})`;ctx.lineWidth=width;ctx.stroke();
+}
+// shading: diagonal pencil hatching in a crescent on the lower right (the bubble's shadow side)
+function hatchCrescent(n,seed,h){
+  const x=n.x,y=n.y,r=n.rr;
+  ctx.save();
+  ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.moveTo(x-r*.17+r*.88,y-r*.19);ctx.arc(x-r*.17,y-r*.19,r*.88,0,TAU);ctx.clip('evenodd');
+  ctx.lineWidth=.85;ctx.strokeStyle=`hsla(${h},30%,32%,.30)`;
+  ctx.beginPath();
+  for(let d=-2*r,i=0;d<2*r;d+=6.5,i++){const j=(rnd(seed,i)-.5)*2;ctx.moveTo(x+d-r+j,y+r);ctx.lineTo(x+d+r,y-r+j*.6)}
+  ctx.stroke();
+  // cross-hatch the darkest edge
+  ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.moveTo(x-r*.12+r*.95,y-r*.13);ctx.arc(x-r*.12,y-r*.13,r*.95,0,TAU);ctx.clip('evenodd');
+  ctx.strokeStyle=`rgba(${INK},.22)`;ctx.beginPath();
+  for(let d=-2*r,i=0;d<2*r;d+=7,i++){const j=(rnd(seed+3,i)-.5)*2;ctx.moveTo(x+d-r+j,y-r);ctx.lineTo(x+d+r,y+r+j*.6)}
+  ctx.stroke();ctx.restore();
+}
+// the classic cartoon shine: an eraser-white patch and two curved pencil marks top-left
+function shine(n){
+  const x=n.x,y=n.y,r=n.rr;
+  const g=ctx.createRadialGradient(x-r*.42,y-r*.44,0,x-r*.42,y-r*.44,r*.32);
+  g.addColorStop(0,'rgba(255,255,252,.85)');g.addColorStop(1,'rgba(255,255,252,0)');
+  ctx.fillStyle=g;ctx.fillRect(x-r*.8,y-r*.8,r*.8,r*.8);
+  ctx.lineCap='round';ctx.strokeStyle=`rgba(${INK},.62)`;ctx.lineWidth=1.7;
+  ctx.beginPath();ctx.arc(x,y,r*.74,Math.PI*1.07,Math.PI*1.36);ctx.stroke();
+  ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,r*.74,Math.PI*1.42,Math.PI*1.49);ctx.stroke();
+}
+function cellClip(n,pad){
+  ctx.beginPath();ctx.arc(n.x,n.y,n.rr+pad,0,TAU);ctx.clip();
+  for(const g of geo.G.get(n))clipSide(g,n,n.x,n.y,n.rr+pad+3);
+}
+// a soap-film wall, sketched as two jittery pencil passes
+function sketchWall(g){
+  const pts=[],N=14;
+  if(g.line){for(let i=0;i<=N;i++){const f=i/N;pts.push([g.p1x+(g.p2x-g.p1x)*f,g.p1y+(g.p2y-g.p1y)*f])}}
+  else{const a1=Math.atan2(g.p1y-g.wy,g.p1x-g.wx),a2=Math.atan2(g.p2y-g.wy,g.p2x-g.wx);
+    let da=a2-a1;while(da>Math.PI)da-=TAU;while(da<-Math.PI)da+=TAU;
+    for(let i=0;i<=N;i++){const a=a1+da*i/N;pts.push([g.wx+Math.cos(a)*g.r3,g.wy+Math.sin(a)*g.r3])}}
+  const sd=seedOf(g.a)+seedOf(g.b),nx=-(pts[N][1]-pts[0][1]),ny=pts[N][0]-pts[0][0],nl=Math.hypot(nx,ny)||1;
+  for(let p=0;p<2;p++){
+    ctx.beginPath();
+    pts.forEach(([x,y],i)=>{const o=(Math.sin(i*1.3+sd*50+p*2)*.9+(p-.5)*1.1);const px=x+nx/nl*o,py=y+ny/nl*o;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});
+    ctx.strokeStyle=`rgba(${INK},${p?.4:.75})`;ctx.lineWidth=p?1:1.5;ctx.stroke();
+  }
+}
+
+/* =================== drawing =================== */
+let maxDpr=2,slowFrames=0;
+let view={s:1,cx:0,cy:0},cw=0,ch=0,dpr=1,geo={A:[],G:new Map(),list:[]},hover=null,editing=null,tool='cursor';
+function fitView(){
+  const W=stage.clientWidth,H=stage.clientHeight;
+  let mx=CR,my=CR;
+  for(const n of live()){mx=Math.max(mx,Math.abs(n.x)+n.r);my=Math.max(my,Math.abs(n.y)+n.r)}
+  const ts=Math.max(.28,Math.min(1,(W/2-24)/mx,(H/2-70)/my));
+  view.s=Math.abs(ts-view.s)<.002?ts:view.s+(ts-view.s)*.08;view.cx=W/2;view.cy=H/2;
+  const wt=`translate(${view.cx}px,${view.cy}px) scale(${view.s.toFixed(4)})`;
+  if(wt!==world._t){world.style.transform=wt;world._t=wt;wake(2)}    // only re-render text when the zoom really changes
+  const d=Math.min(maxDpr,devicePixelRatio||1);
+  if(W*d!==cw||H*d!==ch||d!==dpr){wake(2);dpr=d;cw=canvas.width=Math.round(W*d);ch=canvas.height=Math.round(H*d)}
+}
+function draw(t){
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cw,ch);
+  const s=view.s;ctx.setTransform(dpr*s,0,0,dpr*s,dpr*view.cx,dpr*view.cy);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  const A=simNodes().filter(n=>n.rr>.8);
+  geo=computeGeo(A);
+  for(const n of A){
+    const seed=seedOf(n),h=hueOf(n),isC=n===center;
+    ctx.save();ctx.globalAlpha=n.dying?Math.min(1,n.rr0/12):1;
+    // inside the cell: a whisper of colour, shading and shine
+    ctx.save();cellClip(n,0);
+    ctx.fillStyle=`hsla(${h},45%,62%,${isC?.03:.06})`;ctx.fillRect(n.x-n.rr,n.y-n.rr,2*n.rr,2*n.rr);
+    ctx.fillStyle='rgba(255,255,252,.5)';ctx.fillRect(n.x-n.rr,n.y-n.rr,2*n.rr,2*n.rr);
+    hatchCrescent(n,seed,h);shine(n);
+    ctx.restore();
+    // the pencil outline (only the part of the rim that is not merged into a neighbour)
+    ctx.save();cellClip(n,6);
+    const hl=(editing&&editing.id===n.id)?'35,87,196':(hover===n&&!isC)?(tool==='pin'?INK:tool==='erase'?'196,40,40':null):null;
+    sketchRing(n.x,n.y,n.rr,seed,0,isC?2.4:1.8,.85);
+    sketchRing(n.x,n.y,n.rr,seed,1,1.1,.45);
+    if(isC)sketchRing(n.x,n.y,n.rr-4,seed,2,1,.35);
+    if(hl){sketchRing(n.x,n.y,n.rr,seed+.37,2,2.8,.9,hl);sketchRing(n.x,n.y,n.rr-3,seed+.61,3,1.6,.6,hl)}
+    if(isC&&!state.groups.length){ctx.setLineDash([6,9]);sketchRing(n.x,n.y,n.rr+12+4*Math.sin(t/300),seed+.2,4,1.4,.5);ctx.setLineDash([])}
+    ctx.restore();ctx.restore();
+  }
+  // shared walls between merged bubbles, clipped at triple junctions
+  for(const g of geo.list){
+    ctx.save();
+    const wb=g.h+12;
+    for(const q of geo.G.get(g.a))if(q!==g)clipSide(q,g.a,g.mx,g.my,wb);
+    for(const q of geo.G.get(g.b))if(q!==g)clipSide(q,g.b,g.mx,g.my,wb);
+    ctx.globalAlpha=Math.min(1,g.h/10)*(g.a.dying||g.b.dying?.5:1);
+    sketchWall(g);
+    ctx.restore();
+  }
+}
+
+/* -------- labels (DOM, so they can be typed into) -------- */
+const els=new Map();
+const centerLab=document.createElement('div');centerLab.className='lab center';
+centerLab.innerHTML='<div class="c-wrap"><div class="c-wk"></div><div class="c-day"></div><div class="c-mo"></div><div class="c-stat"></div></div>';
+centerLab.style.width='200px';centerLab.style.transform='translate(-50%,-50%)';world.appendChild(centerLab);
+const hint=document.createElement('div');hint.className='hint';hint.textContent='tap the date to blow your first bubble ✎';world.appendChild(hint);
+let frameNo=0;
+function centroids(){
+  for(const n of geo.A){
+    if(n===center||n.dying)continue;
+    if(!geo.G.get(n).length){n.cx=n.x;n.cy=n.y;n.re=n.rr;continue}
+    const N=7,st=2*n.rr/N;let sx=0,sy=0,c=0,tot=0;
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+      const px=n.x-n.rr+(i+.5)*st,py=n.y-n.rr+(j+.5)*st;
+      if((px-n.x)**2+(py-n.y)**2>n.rr*n.rr)continue;tot++;
+      if(owner(px,py,geo)===n){sx+=px;sy+=py;c++}
+    }
+    if(c){n.cx=sx/c;n.cy=sy/c;n.re=n.rr*Math.sqrt(c/tot)}else{n.cx=n.x;n.cy=n.y;n.re=n.rr*.5}
+  }
+}
+function syncLabels(){
+  if(frameNo%4===0)centroids();
+  for(const n of [...state.groups,...state.tasks]){
+    let el=els.get(n.id);
+    if(!el){
+      el=document.createElement('div');el.className='lab '+n.kind;el.dataset.id=n.id;
+      el.innerHTML='<span class="age" hidden></span><div class="t" spellcheck="false" contenteditable="false"></div>';
+      world.appendChild(el);els.set(n.id,el);el.animate([{opacity:0},{opacity:1}],{duration:500,delay:150,fill:'backwards'});
+      n.lx=n.cx??n.x;n.ly=n.cy??n.y;
+      el._txt=null;
+    }
+    n.lx+=((n.cx??n.x)-n.lx)*.35;n.ly+=((n.cy??n.y)-n.ly)*.35;
+    const w=Math.max(54,Math.min(240,(n.re||n.rr)*1.45));
+    el.style.width=w.toFixed(1)+'px';
+    el.style.transform=`translate(${n.lx.toFixed(1)}px,${n.ly.toFixed(1)}px) translate(-50%,-50%)`;
+    const lab=el.firstChild.nextSibling;
+    if(!(editing&&editing.id===n.id)&&el._txt!==n.text){lab.textContent=n.text;el._txt=n.text}
+    if(frameNo%2===0&&Math.abs(n.rr0-n.r)<2.5&&Math.abs(n.vx)+Math.abs(n.vy)<.15)fitWords(n,el,lab);
+    lab.dataset.ph=n.kind==='group'?'Group name…':'Task…';
+    const days=dayDiff(n.created,today()),age=el.firstChild;
+    if(days>0){age.hidden=false;age.textContent='↻ '+days+'d';age.title='Rolled over from '+n.created}else age.hidden=true;
+  }
+  hint.style.opacity=state.groups.length?0:.85;hint.style.transform=`translate(0,${CR+30}px)`;
+}
+/* the film flows around its words: if any edge of the text pokes outside this bubble's
+   own cell of the foam, the bubble swells a little; when there is spare room it relaxes */
+function fitWords(n,el,lab){
+    const rg=document.createRange();rg.selectNodeContents(lab);const bx=rg.getBoundingClientRect();
+  const w=Math.max(bx.width/view.s,lab.textContent?0:40),h=el.offsetHeight;if(!w||!h)return;
+  const test=m=>{const hw=w/2+m,hh=h/2+m;let bad=0;
+    for(const [dx,dy] of [[-hw,-hh],[hw,-hh],[-hw,hh],[hw,hh],[0,-hh],[0,hh],[-hw,0],[hw,0],[-hw/2,-hh],[hw/2,-hh],[-hw/2,hh],[hw/2,hh]])
+      if(owner(n.lx+dx,n.ly+dy,geo)!==n)bad++;
+    return bad};
+  if(n._fv!==fitVer){n._fv=fitVer;n._budget=25}     // a fresh allowance of adjustments after each change
+  if(n._budget<=0)return;
+  const bad=test(6);
+  if(bad){n.boost=Math.min(70,(n.boost||0)+2+bad);n._budget--}
+  else if(n.boost>0&&!test(16)){n.boost=Math.max(0,n.boost-1);n._budget--}
+  lab.style.overflowWrap=n.r>=190?'anywhere':'';
+}
+function dropLabel(id){const el=els.get(id);if(!el)return;els.delete(id);el.animate([{opacity:1},{opacity:0}],{duration:200}).onfinish=()=>el.remove()}
+let fitVer=0;
+function paintCenter(){
+  wake(4);fitVer++;
+  const d=new Date();
+  centerLab.querySelector('.c-wk').textContent=d.toLocaleDateString(undefined,{weekday:'long'});
+  centerLab.querySelector('.c-day').textContent=d.getDate();
+  centerLab.querySelector('.c-mo').textContent=d.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const open=state.tasks.length+state.groups.filter(g=>!state.tasks.some(t=>t.gid===g.id)).length;
+  const pt=state.done.filter(x=>ymd(new Date(x.completed))===today()).length;
+  centerLab.querySelector('.c-stat').textContent=`${open} open · ${pt} popped`;
+  $('#doneCount').textContent=state.done.length;
+}
+
+/* =================== creating (budding) =================== */
+function budPoint(parent,prefer){            // the free-est spot on the parent's surface
+  let best=null,bs=-1e9;
+  for(let k=0;k<36;k++){
+    const a=k/36*TAU,ux=Math.cos(a),uy=Math.sin(a),px=parent.x+ux*parent.rr,py=parent.y+uy*parent.rr;
+    let free=1e9;
+    for(const n of live()){if(n===parent)continue;free=Math.min(free,Math.hypot(px-n.x,py-n.y)-n.rr)}
+    const sc=Math.min(free,160)+prefer(ux,uy);
+    if(sc>bs){bs=sc;best={ux,uy}}
+  }
+  return {x:parent.x+best.ux*(parent.rr-4),y:parent.y+best.uy*(parent.rr-4)};
+}
+function newGroup(text,hue,created){
+  const used=state.groups.map(g=>g.hue);
+  const h=hue??(HUES.find(x=>!used.includes(x))??HUES[state.groups.length%HUES.length]);
+  const g={id:uid(),kind:'group',parent:'center',text:text||'',hue:h,created:created||today()};
+  Object.assign(g,budPoint(center,(ux,uy)=>Math.abs(ux)*25));
+  prep(g,true);state.groups.push(g);return g;
+}
+function newTask(g,text,created){
+  const t={id:uid(),kind:'task',gid:g.id,parent:g.id,hue:g.hue,text:text||'',created:created||today()};
+  // once the group's surface is full, new tasks stack onto the outermost sibling instead
+  const direct=state.tasks.filter(x=>x.parent===g.id),room=Math.max(6,Math.floor(radius(g)/15));
+  let host=g;
+  if(direct.length>=room){
+    const kids=x=>state.tasks.filter(y=>y.parent===x.id).length;
+    host=state.tasks.filter(x=>x.gid===g.id&&kids(x)<2)
+      .sort((a,b)=>(kids(a)-kids(b))||(Math.hypot(b.x-g.x,b.y-g.y)-Math.hypot(a.x-g.x,a.y-g.y)))[0]||g;
+    t.parent=host.id;
+  }
+  const ox0=host===g?g.x:host.x-g.x,oy0=host===g?g.y:host.y-g.y,ol=Math.hypot(ox0,oy0)||1,ox=ox0/ol,oy=oy0/ol;
+  Object.assign(t,budPoint(host,(ux,uy)=>(ux*ox+uy*oy)*40));
+  prep(t,true);state.tasks.push(t);return t;
+}
+function addGroup(){const g=newGroup();paintCenter();syncLabels();startEdit(g.id,true)}
+function addTask(gid){const t=newTask(find(gid),'');paintCenter();syncLabels();startEdit(t.id,true)}
+function adopt(n){for(const x of state.tasks)if(x.parent===n.id)x.parent=n.parent;rebalance()}   // stacked tasks re-attach below
+function rebalance(){
+  for(const g of state.groups){
+    const direct=state.tasks.filter(t=>t.parent===g.id),room=Math.max(6,Math.floor(radius(g)/15));
+    if(direct.length<=room)continue;
+    // keep an evenly spread ring of tasks on the group; the rest move out a layer
+    direct.sort((a,b)=>Math.atan2(a.y-g.y,a.x-g.x)-Math.atan2(b.y-g.y,b.x-g.x));
+    const keep=new Set();for(let i=0;i<room;i++)keep.add(direct[Math.floor(i*direct.length/room)]);
+    const hosts=[...keep],kids=new Map(hosts.map(h=>[h,0]));
+    for(const t of state.tasks)if(t.gid===g.id&&t.parent!==g.id&&kids.has(find(t.parent)))kids.set(find(t.parent),kids.get(find(t.parent))+1);
+    for(const t of direct){
+      if(keep.has(t))continue;
+      let best=null,bd=1e9;
+      for(const h of hosts){if((kids.get(h)||0)>=2)continue;const d=Math.hypot(h.x-t.x,h.y-t.y);if(d<bd){bd=d;best=h}}
+      if(!best)break;
+      t.parent=best.id;kids.set(best,(kids.get(best)||0)+1);hosts.push(t);kids.set(t,0);
+      // start it just outside its new host so it slides into place
+      const ol=Math.hypot(best.x-g.x,best.y-g.y)||1;t.x=best.x+(best.x-g.x)/ol*best.rr*.6;t.y=best.y+(best.y-g.y)/ol*best.rr*.6;t.vx=t.vy=0;
+    }
+  }
+}
+function toGhost(n){
+  state.tasks.filter(t=>t.gid===n.id).forEach(toGhost);
+  if(n.kind==='task')adopt(n);
+  state.groups=state.groups.filter(g=>g!==n);state.tasks=state.tasks.filter(t=>t!==n);
+  n.dying=true;ghosts.push(n);dropLabel(n.id);
+}
+
+/* =================== editing =================== */
+let justCommitted=null;
+function startEdit(id,isNew){
+  wake(4);
+  if(editing)commitEdit();
+  const n=find(id),el=els.get(id);if(!n||!el)return;
+  const lab=el.querySelector('.t');
+  editing={id,isNew};el.classList.add('editing');
+  lab.contentEditable='plaintext-only';if(lab.contentEditable!=='plaintext-only')lab.contentEditable='true';
+  lab.focus();
+  const r=document.createRange();r.selectNodeContents(lab);r.collapse(false);
+  const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
+}
+function commitEdit(cancel){
+  wake(6);
+  if(!editing)return;
+  const {id,isNew}=editing;editing=null;
+  const n=find(id),el=els.get(id);if(!n||!el)return;
+  justCommitted={id,t:performance.now()};
+  const lab=el.querySelector('.t');
+  const text=lab.textContent.replace(/\s+/g,' ').trim().slice(0,120);
+  lab.contentEditable='false';el.classList.remove('editing');
+  if(cancel||!text){if(isNew||!n.text){toGhost(n);paintCenter();save();return}}
+  else n.text=text;
+  n.r=radius(n);lab.textContent=n.text;el._txt=n.text;
+  getSelection().removeAllRanges();paintCenter();save();
+}
+world.addEventListener('input',e=>{wake(4);if(!editing)return;const n=find(editing.id);n.r=radius(n,e.target.textContent)});
+world.addEventListener('keydown',e=>{
+  if(!editing)return;
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.target.blur()}
+  if(e.key==='Escape'){e.preventDefault();commitEdit(true)}
+});
+world.addEventListener('focusout',()=>setTimeout(()=>{if(editing&&document.activeElement!==els.get(editing.id)?.querySelector('.t'))commitEdit()},0));
+world.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,(e.clipboardData.getData('text/plain')||'').replace(/\n/g,' '))});
+
+/* =================== interaction =================== */
+function toWorld(e){const r=stage.getBoundingClientRect();return [(e.clientX-r.left-view.cx)/view.s,(e.clientY-r.top-view.cy)/view.s]}
+const hit=e=>{const [x,y]=toWorld(e);const n=owner(x,y,geo);return n&&!n.dying?n:null};
+let press=null,suppress=false;
+stage.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.lab.editing'))return;
+  const n=hit(e);if(!n||tool!=='cursor'||n===center||editing)return;
+  clearTimeout(press?.t);
+  press={x:e.clientX,y:e.clientY,t:setTimeout(()=>{suppress=true;startEdit(n.id,false);press=null},550)};
+});
+stage.addEventListener('pointermove',e=>{
+  if(press&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>8){clearTimeout(press.t);press=null}
+  const hv=hit(e);if(hv!==hover){hover=hv;wake()}
+  stage.style.cursor=tool==='pin'?'none':tool==='erase'?'crosshair':hover?'pointer':'default';
+});
+stage.addEventListener('pointerleave',()=>{hover=null;wake()});
+['pointerup','pointercancel'].forEach(t=>addEventListener(t,()=>{if(press){clearTimeout(press.t);press=null}}));
+
+stage.addEventListener('click',e=>{
+  wake(4);
+  if(suppress){suppress=false;return}
+  if(e.target.closest('.lab.editing'))return;
+  const n=hit(e);if(!n)return;
+  if(justCommitted&&justCommitted.id===n.id&&performance.now()-justCommitted.t<400)return;
+  if(tool==='cursor'){
+    if(n===center)addGroup();
+    else if(n.kind==='group')addTask(n.id);
+    else startEdit(n.id,false);
+  }else if(tool==='pin'){
+    if(n===center){toast("The date bubble can't be popped — it's today! 🌤");return}
+    if(n.kind==='group'&&state.tasks.some(t=>t.gid===n.id)){n.shakeT=performance.now();toast('Pop the tasks on “'+n.text+'” first');return}
+    pop(n);
+  }else if(tool==='erase'){
+    if(n===center)return;
+    const snap=JSON.stringify({groups:state.groups,tasks:state.tasks},(k,v)=>TRANSIENT.has(k)?undefined:v);
+    toGhost(n);paintCenter();save();
+    toast('Deleted “'+n.text+'”',()=>{const o=JSON.parse(snap);state.groups=o.groups;state.tasks=o.tasks;normalise();
+      [...state.groups,...state.tasks].forEach(x=>{prep(x,true)});ghosts=[];[...els.keys()].forEach(dropLabel);paintCenter();save()});
+  }
+});
+
+/* =================== popping =================== */
+function pop(n){
+  const g=n.kind==='task'?groupOf(n):null,h=hueOf(n);
+  state.done.push({id:uid(),text:n.text,group:g?g.text:'',gid:g?g.id:null,hue:h,kind:n.kind,created:n.created,completed:Date.now()});
+  if(n.kind==='task')adopt(n);
+  state.groups=state.groups.filter(x=>x!==n);state.tasks=state.tasks.filter(x=>x!==n);
+  dropLabel(n.id);popFx(n,h);popSound();
+  // the neighbours lose a wall: give them a little kick, like real foam relaxing
+  for(const q of live())if(!q.fixed){const dx=q.x-n.x,dy=q.y-n.y,d=Math.hypot(dx,dy)||1;if(d<n.rr+q.rr){q.vx-=dx/d*1.5;q.vy-=dy/d*1.5}}
+  paintCenter();save();
+}
+function popFx(n,h){
+  const NS='http://www.w3.org/2000/svg',r=n.rr,S2=r*4;
+  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','popfx');
+  svg.setAttribute('width',S2);svg.setAttribute('height',S2);svg.setAttribute('viewBox',`${-S2/2} ${-S2/2} ${S2} ${S2}`);
+  svg.style.transform=`translate(${n.x-S2/2}px,${n.y-S2/2}px)`;
+  const mk=(tag,attrs)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);svg.appendChild(e);return e};
+  const ink='#2b2a2f',rot0=Math.random()*TAU;
+  // the outline snaps into curved pencil fragments that fly apart
+  for(let i=0;i<7;i++){
+    const a0=rot0+i/7*TAU+Math.random()*.25,a1=a0+.45+Math.random()*.25,mid=(a0+a1)/2;
+    const e=mk('path',{d:`M${Math.cos(a0)*r} ${Math.sin(a0)*r} A${r} ${r} 0 0 1 ${Math.cos(a1)*r} ${Math.sin(a1)*r}`,stroke:ink,'stroke-width':2.2,fill:'none','stroke-linecap':'round'});
+    const dx=Math.cos(mid)*r*.55,dy=Math.sin(mid)*r*.55+8,sp=(Math.random()-.5)*70;
+    e.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${sp}deg)`,opacity:0}],
+      {duration:380+Math.random()*120,easing:'cubic-bezier(.15,.7,.3,1)',fill:'forwards'});
+  }
+  // comic action lines
+  for(let i=0;i<12;i++){
+    const a=rot0+i/12*TAU+(i%2?.12:0),r1=r*(1.05+(i%2)*.08),r2=r*(1.3+(i%3)*.1);
+    const e=mk('path',{d:`M${Math.cos(a)*r1} ${Math.sin(a)*r1} L${Math.cos(a)*r2} ${Math.sin(a)*r2}`,stroke:ink,'stroke-width':2,'stroke-linecap':'round',fill:'none'});
+    const L=r2-r1;e.setAttribute('stroke-dasharray',L);
+    e.animate([{strokeDashoffset:L,opacity:1},{strokeDashoffset:0,opacity:1,offset:.45},{strokeDashoffset:-L,opacity:0}],{duration:420,easing:'ease-out',fill:'forwards'});
+  }
+  // little droplets
+  for(let i=0;i<9;i++){
+    const a=Math.random()*TAU,d=r*(.95+Math.random()*.7),c=mk('circle',{cx:Math.cos(a)*r*.7,cy:Math.sin(a)*r*.7,r:2+Math.random()*3.5,fill:`hsla(${h},40%,60%,.35)`,stroke:ink,'stroke-width':1.3});
+    c.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*(d-r*.7)}px,${Math.sin(a)*(d-r*.7)+20}px)`,opacity:0}],{duration:520+Math.random()*200,easing:'cubic-bezier(.2,.6,.4,1)',fill:'forwards'});
+  }
+  // "POP!"
+  const fs=Math.max(26,Math.min(60,r*.55));
+  const tx=mk('text',{x:0,y:fs*.35,'text-anchor':'middle','font-family':'Caveat, cursive','font-weight':700,'font-size':fs,fill:ink,stroke:'#f2ede1','stroke-width':4,'paint-order':'stroke'});
+  tx.textContent='POP!';
+  tx.animate([{transform:'rotate(-10deg) scale(.3)',opacity:0},{transform:'rotate(-6deg) scale(1.2)',opacity:1,offset:.3},{transform:'rotate(-8deg) scale(1)',opacity:1,offset:.7},{transform:'rotate(-8deg) scale(1.05) translateY(-8px)',opacity:0}],
+    {duration:620,easing:'ease-out',fill:'forwards'});
+  world.appendChild(svg);setTimeout(()=>svg.remove(),760);
+}
+let actx=null;
+function popSound(){
+  if(!state.sound)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const t=actx.currentTime+.005,sr=actx.sampleRate,out=actx.createGain();out.gain.value=.9;out.connect(actx.destination);
+    // 1. the snap: a very short, bright click
+    const n=Math.floor(sr*.018),buf=actx.createBuffer(1,n,sr),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,5);
+    const src=actx.createBufferSource();src.buffer=buf;
+    const hp=actx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1600;
+    const cg=actx.createGain();cg.gain.value=.8;src.connect(hp);hp.connect(cg);cg.connect(out);src.start(t);
+    // 2. the "pop": a fast downward pitch drop, like a cork
+    const o=actx.createOscillator(),og=actx.createGain();o.type='sine';
+    o.frequency.setValueAtTime(1150+Math.random()*250,t);o.frequency.exponentialRampToValueAtTime(130,t+.05);
+    og.gain.setValueAtTime(.0001,t);og.gain.linearRampToValueAtTime(.85,t+.003);og.gain.exponentialRampToValueAtTime(.001,t+.1);
+    o.connect(og);og.connect(out);o.start(t);o.stop(t+.12);
+    // 3. a tiny watery "plip" after it
+    const p=actx.createOscillator(),pg=actx.createGain();p.type='triangle';
+    p.frequency.setValueAtTime(1700,t+.03);p.frequency.exponentialRampToValueAtTime(2900,t+.07);
+    pg.gain.setValueAtTime(.0001,t+.03);pg.gain.linearRampToValueAtTime(.12,t+.035);pg.gain.exponentialRampToValueAtTime(.001,t+.09);
+    p.connect(pg);pg.connect(out);p.start(t+.03);p.stop(t+.1);
+  }catch(e){}
+}
+
+/* =================== tools / tabs / toast =================== */
+const HELP={
+  cursor:'Tap the date to add a group · tap a group to add tasks · tap a task or hold a group to rename',
+  pin:'Tap a task bubble to pop it — it moves to Completed',
+  erase:'Tap any bubble to delete it (groups take their tasks with them)'
+};
+function setTool(t){
+  wake();
+  if(editing)commitEdit();
+  tool=t;document.body.classList.remove('pin','erase');if(t!=='cursor')document.body.classList.add(t);
+  document.querySelectorAll('[data-tool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));
+  helpEl.textContent=HELP[t];stage.style.cursor=t==='pin'?'none':t==='erase'?'crosshair':'default';
+}
+$('#tools').addEventListener('click',e=>{const b=e.target.closest('[data-tool]');if(b)setTool(b.dataset.tool)});
+function paintSound(){$('#soundBtn').setAttribute('aria-pressed',state.sound);$('#wave').style.display=state.sound?'':'none'}
+$('#soundBtn').addEventListener('click',()=>{state.sound=!state.sound;paintSound();save();if(state.sound)popSound()});
+addEventListener('keydown',e=>{
+  if(editing||e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==='v')setTool('cursor');if(k==='p')setTool('pin');if(k==='x')setTool('erase');if(k==='escape')setTool('cursor');
+});
+let onDone=false;
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+  if(editing)commitEdit();
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));
+  onDone=b.dataset.tab==='done';
+  stage.style.visibility=onDone?'hidden':'';$('#doneView').hidden=!onDone;$('#tools').style.display=onDone?'none':'';
+  helpEl.style.display=onDone?'none':'';
+  if(onDone)renderDone();else wake(4);
+}));
+let toastT;
+function toast(msg,undo){
+  toastEl.textContent=msg;
+  if(undo){const b=document.createElement('button');b.textContent='Undo';b.onclick=()=>{undo();toastEl.classList.remove('show')};toastEl.appendChild(b)}
+  toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),undo?6000:3500);
+}
+
+/* =================== completed tab =================== */
+function renderDone(){
+  const root=$('#doneInner');root.innerHTML='';
+  const days={};state.done.slice().sort((a,b)=>b.completed-a.completed).forEach(d=>{(days[ymd(new Date(d.completed))]??=[]).push(d)});
+  const keys=Object.keys(days).sort().reverse(),t=today();
+  let streak=0,cur=new Date();if(!days[t])cur.setDate(cur.getDate()-1);
+  while(days[ymd(cur)]){streak++;cur.setDate(cur.getDate()-1)}
+  const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!=null)x.textContent=txt;return x};
+  const stats=el('div','stats');
+  [[(days[t]||[]).length,'popped today'],[state.done.length,'all time'],[streak,'day streak 🔥']].forEach(([n,l])=>{const s=el('div','stat');s.append(el('b',null,n),el('span',null,l));stats.append(s)});
+  root.append(stats);
+  const wk=el('div','week'),counts=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);counts.push([d,(days[ymd(d)]||[]).length])}
+  const max=Math.max(1,...counts.map(c=>c[1]));
+  counts.forEach(([d,c],i)=>{const col=el('div',i===6?'t':'');const bar=el('i');bar.style.height=(c?8+c/max*46:4)+'px';bar.style.opacity=c?1:.25;
+    col.append(el('span',null,c||''),bar,el('span',null,d.toLocaleDateString(undefined,{weekday:'narrow'})));wk.append(col)});
+  root.append(wk);
+  if(!keys.length){root.append(el('div','empty','Nothing popped yet.\nPick the 📌 pin and pop a task bubble — it will land here as your daily log.'));return}
+  keys.forEach(k=>{
+    const sec=el('div','day'),h=el('h3'),diff=dayDiff(k,t);
+    const label=diff===0?'Today':diff===1?'Yesterday':new Date(k+'T12:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+    h.append(el('div',null,label),el('span',null,days[k].length+' done'));sec.append(h);
+    days[k].forEach((d,i)=>{
+      const it=el('div','item');it.style.setProperty('--h',d.hue);it.style.animationDelay=Math.min(i*30,300)+'ms';
+      const body=el('div','tx',d.text);
+      body.append(document.createElement('br'),el('span','chip',d.group||(d.kind==='group'?'Group':'Task')));
+      const u=el('button','undo','↩');u.title='Put this bubble back';u.onclick=()=>restore(d.id);
+      it.append(el('div','tick','✓'),body,el('div','when',new Date(d.completed).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})),u);sec.append(it);
+    });
+    root.append(sec);
+  });
+}
+function restore(id){
+  const d=state.done.find(x=>x.id===id);if(!d)return;
+  if(d.kind==='group')newGroup(d.text,d.hue,d.created);
+  else{let g=state.groups.find(x=>x.id===d.gid);if(!g)g=newGroup(d.group||'Restored',d.hue,d.created);newTask(g,d.text,d.created)}
+  state.done=state.done.filter(x=>x!==d);
+  paintCenter();save();renderDone();toast('Bubble put back on the board');
+}
+
+/* =================== pin cursor =================== */
+const pinEl=$('#pin');
+let px=0,py=0;
+addEventListener('pointermove',e=>{
+  px=e.clientX;py=e.clientY;
+  if(e.pointerType==='mouse'){document.body.classList.add('hasmouse');
+    pinEl.style.visibility=e.target.closest&&e.target.closest('.tools,.top')?'hidden':'visible';
+    pinEl.style.transform=`translate(${px-24}px,${py-46}px)`}
+});
+addEventListener('pointerdown',e=>{if(tool==='pin'){pinEl.classList.add('stab');setTimeout(()=>pinEl.classList.remove('stab'),130)}
+  if(e.pointerType!=='mouse')document.body.classList.remove('hasmouse')});
+document.documentElement.addEventListener('pointerleave',()=>{pinEl.style.visibility='hidden'});
+
+/* =================== day roll-over =================== */
+let shownDay=today();
+function checkDay(){
+  const t=today();
+  if(t!==shownDay){shownDay=t;paintCenter();if(state.tasks.length||state.groups.length)toast('☀️ New day! Your unpopped bubbles rolled over.')}
+}
+setInterval(checkDay,20000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else checkDay()});
+addEventListener('pagehide',save);
+setInterval(save,15000);
+
+/* =================== main loop =================== */
+let last=performance.now(),acc=0;
+function frame(t){
+  acc+=Math.min(80,t-last);last=t;
+  motion=0;while(acc>=16.67){step(t);acc-=16.67}
+  if(!onDone){
+    fitView();
+    if(motion>.015||wakeN>0||!state.groups.length){
+      const q=performance.now();draw(t);frameNo++;syncLabels();if(wakeN>0)wakeN--;
+      // on a slow device, drop canvas resolution rather than stutter
+      if(performance.now()-q>22){if(++slowFrames>20&&maxDpr>1){maxDpr=Math.max(1,maxDpr-.5);slowFrames=0}}else slowFrames=Math.max(0,slowFrames-1);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+paintSound();setTool('cursor');paintCenter();fitView();
+for(let i=0;i<200;i++)step(0);                 // settle a saved board before first paint
+requestAnimationFrame(frame);
+if(state.lastOpen&&state.lastOpen!==today()&&(state.tasks.length||state.groups.length)){
+  const days=dayDiff(state.lastOpen,today()),n=state.tasks.length+state.groups.length;
+  setTimeout(()=>toast(`☀️ New day — ${n} bubble${n>1?'s':''} rolled over from ${days===1?'yesterday':days+' days ago'}`),600);
+}
+save();
+
+/* =================== backup & restore =================== */
+const bk=$('#backup'),bkMsg=$('#bkMsg');
+const backupText=()=>JSON.stringify({app:'bubble-day',v:1,saved:new Date().toISOString(),data:JSON.parse(JSON.stringify(state,(k,v)=>TRANSIENT.has(k)?undefined:v))});
+function openBackup(){if(editing)commitEdit();bkMsg.textContent='';$('#bkText').value='';bk.hidden=false}
+if(window.top!==window)$('#bkDownload').hidden=true;   // embedded pages can't download files: offer copy instead
+$('#backupBtn').addEventListener('click',openBackup);
+$('#bkClose').addEventListener('click',()=>bk.hidden=true);
+bk.addEventListener('click',e=>{if(e.target===bk)bk.hidden=true});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!bk.hidden)bk.hidden=true});
+$('#bkDownload').addEventListener('click',()=>{
+  try{
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([backupText()],{type:'application/json'}));
+    a.download=`bubble-day-backup-${today()}.json`;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    bkMsg.textContent='Backup file saved ✓  (if nothing downloaded, use “Copy as text”)';
+  }catch(e){bkMsg.textContent='Downloads are blocked here: use “Copy as text” instead.'}
+});
+$('#bkCopy').addEventListener('click',async()=>{
+  const txt=backupText();
+  try{await navigator.clipboard.writeText(txt);bkMsg.textContent='Copied ✓  Paste it into Bubble Day on your other device.'}
+  catch(e){const ta=$('#bkText');ta.value=txt;ta.select();bkMsg.textContent='Couldn’t copy automatically: the backup is in the box below, copy it from there.'}
+});
+$('#bkPick').addEventListener('click',()=>$('#bkFile').click());
+$('#bkFile').addEventListener('change',async e=>{const f=e.target.files[0];if(f)restoreFrom(await f.text());e.target.value=''});
+$('#bkRestore').addEventListener('click',()=>restoreFrom($('#bkText').value));
+function restoreFrom(txt){
+  let o;try{o=JSON.parse(txt.trim())}catch(e){bkMsg.textContent='That doesn’t look like a Bubble Day backup.';return}
+  const d=o&&o.data?o.data:o;
+  if(!d||!Array.isArray(d.groups)||!Array.isArray(d.tasks)||!Array.isArray(d.done)){bkMsg.textContent='That doesn’t look like a Bubble Day backup.';return}
+  const n=d.groups.length+d.tasks.length;
+  if((state.groups.length||state.tasks.length||state.done.length)&&!bkMsg.dataset.confirm){
+    bkMsg.dataset.confirm='1';bkMsg.textContent=`This replaces the bubbles on this device with the backup (${n} bubbles, ${d.done.length} completed). Tap restore again to confirm.`;
+    setTimeout(()=>delete bkMsg.dataset.confirm,8000);return;
+  }
+  saveBlocked=true;   // stop the page saving its old board over the backup while it reloads
+  try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){saveBlocked=false;bkMsg.textContent='Couldn’t save on this device.';return}
+  bkMsg.textContent='Restored ✓';setTimeout(()=>location.reload(),400);
+}
+
+/* =================== installable app: work offline =================== */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&window.top===window){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+window.__bd={get motion(){return motion},get frames(){return frameNo},state,newGroup,newTask,setTool,pop,find,get geo(){return geo},center};
+})();
+</script>
+</body>
+</html>
