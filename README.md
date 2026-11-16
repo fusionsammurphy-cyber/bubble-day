@@ -1,6 +1,6 @@
 # Bubble Day
 
-A daily to-do list made of soap bubbles. It's a single-page web app that installs to your phone's home screen and works offline.
+A neon arcade to-do list: blast your tasks off the grid. It's a single-page web app that installs to your phone's home screen and works offline.
 
 ## Files
 - `index.html`: the whole app

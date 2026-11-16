@@ -1,13 +1,13 @@
 {
   "name": "Bubble Day",
   "short_name": "Bubble Day",
-  "description": "A daily to-do list made of soap bubbles.",
+  "description": "A neon arcade to-do list: blast your tasks off the grid.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#5aa9e6",
-  "theme_color": "#5aa9e6",
+  "background_color": "#03070d",
+  "theme_color": "#03070d",
   "icons": [
     {
       "src": "icons/icon-192.png",
