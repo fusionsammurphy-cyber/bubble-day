@@ -1,10 +1,13 @@
-// Bubble Day service worker: keeps the app working offline.
-// Bump VERSION whenever index.html changes so phones pick up the new copy.
-const VERSION = 'bubble-day-v5';
+// Bubble Day service worker: keeps the app working offline and picks up new versions quickly.
+// Bump VERSION whenever the app changes.
+const VERSION = 'bubble-day-v6';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // 'reload' skips the browser's HTTP cache, so a new version never precaches an old copy
+  e.waitUntil(caches.open(VERSION)
+    .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -18,15 +21,16 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // The page itself: try the network first so updates arrive, fall back to the saved copy offline.
+  // The page itself: always ask the server (bypassing the HTTP cache) so updates arrive at once;
+  // fall back to the saved copy when offline.
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req)
-      .then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); return res; })
+    e.respondWith(fetch(req.url, { cache: 'no-cache' })
+      .then(res => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); } return res; })
       .catch(() => caches.match('./index.html')));
     return;
   }
 
-  // Handwriting fonts and app files: serve the saved copy, refresh it in the background.
+  // Fonts and app files: serve the saved copy, refresh it in the background.
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (isFont || url.origin === location.origin) {
     e.respondWith(caches.open(VERSION).then(async c => {

@@ -1047,7 +1047,13 @@ function restoreFrom(txt){
 
 /* =================== installable app: work offline =================== */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&window.top===window){
-  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+    // check for a new version whenever the app comes back to the foreground
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})});
+  }).catch(()=>{}));
+  // when a new version takes over, reload once so it shows straight away (not on the next launch)
+  const hadController=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController&&!reloaded&&!editing){reloaded=true;save();location.reload()}});
 }
 window.__bd={skyC,neon,get motion(){return motion},get frames(){return frameNo},state,newGroup,newTask,setTool,pop,find,get geo(){return geo},center};
 })();
