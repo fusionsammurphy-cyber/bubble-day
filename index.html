@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bubble Day</title>
-<meta name="theme-color" content="#f8f6f0">
-<meta name="description" content="A pencil-sketched daily to-do list made of bubbles.">
+<meta name="theme-color" content="#5aa9e6">
+<meta name="description" content="A daily to-do list made of soap bubbles.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -14,152 +14,140 @@
 <meta name="apple-mobile-web-app-title" content="Bubble Day">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#2b2a2f;--paper:#f8f6f0;--hi:rgba(255,213,74,.55)}
+:root{--ink:#0f2c47;--glass:rgba(255,255,255,.30);--glass-b:rgba(255,255,255,.62);--sun:#ffd257}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:"Patrick Hand","Caveat",cursive,system-ui;color:var(--ink);background:var(--paper)}
-body{background-color:var(--paper);background-image:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .28 0 0 0 0 .2 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .34 -.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E"),
-  radial-gradient(ellipse at 6% 94%,rgba(140,105,60,.14),transparent 32%),
-  radial-gradient(ellipse 120% 105% at 50% 50%,rgba(255,255,255,.35) 30%,transparent 62%,rgba(125,100,65,.22) 100%);
-  background-size:260px 260px,1600px 1600px,100% 100%,100% 100%}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
+  background:linear-gradient(#2a7fd0,#6db6ee 55%,#cfe8f8 76%,#7bb35a 80%,#3f7a2d)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-.sk{border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:#fbf8ef;box-shadow:2px 3px 0 rgba(43,42,47,.14)}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  border:1px solid var(--glass-b);border-radius:22px;box-shadow:0 10px 30px rgba(15,60,110,.20),inset 0 1px 0 rgba(255,255,255,.7)}
 
 /* top bar */
 .top{position:fixed;top:0;left:0;right:0;height:calc(64px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:center;z-index:30;padding-top:env(safe-area-inset-top)}
-.tabs{display:flex;gap:6px;padding:4px 8px}
-.tabs button{padding:4px 14px;font-size:20px;opacity:.7;position:relative}
-.tabs button.on{opacity:1;background:linear-gradient(176deg,transparent 52%,var(--hi) 53%,var(--hi) 88%,transparent 90%)}
-.tabs .n{display:inline-block;min-width:22px;margin-left:6px;padding:0 6px;font-size:15px;border:1.5px solid var(--ink);border-radius:50% 45% 55% 48%/52% 50% 48% 50%}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:99px}
+.tabs button{padding:7px 18px;border-radius:99px;font-weight:800;font-size:15px;opacity:.75;transition:.2s}
+.tabs button.on{opacity:1;background:rgba(255,255,255,.92);box-shadow:0 2px 10px rgba(15,60,110,.18)}
+.tabs .n{display:inline-block;min-width:22px;margin-left:6px;padding:0 7px;border-radius:99px;background:rgba(15,44,71,.12);font-size:12px}
 
 /* tools */
-.tools{position:fixed;left:14px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;padding:8px}
-.tools button{width:48px;height:48px;display:grid;place-items:center;opacity:.75;position:relative;border-radius:50%}
-.tools button svg{width:28px;height:28px}
-.tools button:hover{opacity:1}
-.tools button[aria-pressed=true]{opacity:1;background:radial-gradient(ellipse 60% 55% at 50% 55%,var(--hi) 0 70%,transparent 72%)}
-.tools .sep{height:0;border-top:1.5px dashed rgba(43,42,47,.45);margin:2px 8px}
-.tools button .tip{position:absolute;left:60px;white-space:nowrap;background:#fffbe8;border:1.5px solid var(--ink);padding:2px 10px;border-radius:12px 4px 12px 4px;font-size:16px;opacity:0;pointer-events:none;transition:.15s;transform:translateX(-4px) rotate(-1deg)}
-.tools button:hover .tip{opacity:1;transform:rotate(-1deg)}
+.tools{position:fixed;left:14px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:28px}
+.tools button{width:48px;height:48px;display:grid;place-items:center;opacity:.8;position:relative;border-radius:50%;transition:.2s}
+.tools button svg{width:26px;height:26px}
+.tools button:hover{opacity:1;background:rgba(255,255,255,.35)}
+.tools button[aria-pressed=true]{opacity:1;background:rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(15,60,110,.22)}
+.tools .sep{height:1px;background:rgba(15,44,71,.18);margin:2px 8px}
+.tools button .tip{position:absolute;left:60px;white-space:nowrap;background:rgba(15,44,71,.85);color:#fff;padding:4px 10px;border-radius:10px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.15s;transform:translateX(-4px)}
+.tools button:hover .tip{opacity:1;transform:none}
 
-/* stage: a canvas sketches the foam, labels float above it */
-#stage{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+/* stage: a canvas renders the foam, labels float above it */
+#stage{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2}
 #foam{position:absolute;inset:0;width:100%;height:100%}
 #world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;pointer-events:none}
 .lab{will-change:transform;position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;transition:opacity .3s}
-.lab .t{font-family:"Caveat",cursive;font-weight:700;line-height:1.02;outline:none;overflow-wrap:normal;hyphens:manual;max-width:none;min-width:1ch;color:var(--ink);
-  text-shadow:0 0 3px var(--paper),0 0 6px var(--paper);caret-color:#2357c4}
-.lab.group .t{font-size:27px}
-.lab.task .t{font-size:22px;font-weight:600}
-.lab .t:empty::before{content:attr(data-ph);opacity:.45}
+.lab .t{font-weight:800;line-height:1.12;outline:none;overflow-wrap:normal;hyphens:manual;max-width:none;min-width:1ch;color:#fff;
+  text-shadow:0 1px 2px rgba(5,30,60,.55),0 0 14px rgba(5,40,80,.35);caret-color:#fff;letter-spacing:.005em}
+.lab.group .t{font-size:20px;font-weight:900}
+.lab.task .t{font-size:16.5px}
+.lab .t:empty::before{content:attr(data-ph);opacity:.65}
 .lab.editing{pointer-events:auto}
 .lab.editing .t{cursor:text}
-.age{font-size:14px;padding:0 6px;margin-bottom:2px;border:1.5px solid rgba(43,42,47,.7);border-radius:50% 42% 55% 45%/55% 48% 52% 45%;white-space:nowrap;transform:rotate(-4deg);background:rgba(251,248,239,.8)}
+.age{font-size:11px;font-weight:800;padding:1px 8px;margin-bottom:3px;border-radius:99px;white-space:nowrap;color:var(--ink);background:rgba(255,255,255,.75);box-shadow:0 1px 4px rgba(5,30,60,.2)}
 .age[hidden]{display:none}
-.c-wrap{display:flex;flex-direction:column;align-items:center;line-height:1;font-family:"Caveat",cursive;text-shadow:0 0 4px var(--paper),0 0 8px var(--paper)}
-.c-wk{font-size:30px;font-weight:700}
-.c-day{font-size:84px;font-weight:700;margin:-4px 0 -6px}
-.c-mo{font-size:25px;font-weight:600}
-.c-stat{font-family:"Patrick Hand",cursive;font-size:16px;opacity:.7;margin-top:6px}
-.hint{position:absolute;width:300px;margin-left:-150px;text-align:center;font-family:"Caveat",cursive;font-size:26px;font-weight:600;opacity:.8;pointer-events:none;transition:opacity .4s}
-.popfx{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.c-wrap{display:flex;flex-direction:column;align-items:center;line-height:1;color:#fff;text-shadow:0 1px 3px rgba(5,30,60,.5),0 0 18px rgba(5,40,80,.35)}
+.c-wk{font-size:20px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.c-day{font-size:78px;font-weight:900;margin:2px 0}
+.c-mo{font-size:19px;font-weight:800}
+.c-stat{font-size:13px;font-weight:800;opacity:.9;margin-top:8px}
+.hint{position:absolute;width:300px;margin-left:-150px;text-align:center;font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(5,30,60,.5),0 0 14px rgba(5,40,80,.4);pointer-events:none;transition:opacity .4s}
+.popc{position:absolute;left:0;top:0;pointer-events:none}
 
-.mug{position:fixed;top:10px;right:22px;width:185px;height:185px;pointer-events:none;z-index:1;transform:rotate(6deg);opacity:.85}
-.mug .steam{stroke-dasharray:6 7;animation:steam 3.5s linear infinite}
-.mug .steam:nth-of-type(2){animation-duration:4.2s}
-@keyframes steam{to{stroke-dashoffset:-26}}
-@media (max-width:640px){.mug{width:78px;height:78px;top:58px;right:8px;opacity:.6}}
-@media (prefers-reduced-motion:reduce){.mug .steam{animation:none}}
-#help{position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:17px;opacity:.6;pointer-events:none;z-index:5;padding:0 80px}
+#help{position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(5,30,60,.6);opacity:.9;pointer-events:none;z-index:5;padding:0 80px}
 
 /* pin */
 #pin{position:fixed;left:0;top:0;width:48px;height:48px;z-index:40;pointer-events:none;display:none;will-change:transform}
 body.pin.hasmouse #pin{display:block}
-#pin svg{width:48px;height:48px;transform-origin:24px 46px;transform:rotate(30deg);transition:transform .08s;filter:drop-shadow(2px 3px 0 rgba(43,42,47,.15))}
+#pin svg{width:48px;height:48px;transform-origin:24px 46px;transform:rotate(30deg);transition:transform .08s;filter:drop-shadow(3px 5px 4px rgba(10,40,70,.35))}
 #pin.stab svg{transform:rotate(30deg) translateY(6px) scale(.92)}
 
-/* typing bar: sits just above the phone keyboard */
-#editBar{position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:70;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;transform:rotate(-.4deg)}
+/* typing bar (phones) */
+#editBar{position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:70;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;border-radius:20px;background:rgba(255,255,255,.72)}
 #editBar[hidden]{display:none}
-#editBar .k{font-size:15px;opacity:.6;white-space:nowrap}
-#editBar textarea{flex:1;min-width:0;resize:none;overflow:hidden;height:38px;line-height:34px;white-space:nowrap;font-family:"Caveat",cursive;font-weight:700;font-size:26px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed rgba(43,42,47,.5);outline:none;padding:2px 2px 0;caret-color:#2357c4}
-#editBar .btn{padding:4px 12px;font-size:17px}
-#editBar .cx{font-size:24px;opacity:.55;padding:0 4px}
-#zoomHint{position:fixed;right:12px;top:calc(76px + env(safe-area-inset-top));z-index:20;font-size:15px;padding:2px 10px;opacity:0;pointer-events:none;transition:opacity .3s}
-#zoomHint.on{opacity:.85;pointer-events:auto}
-/* backup sheet */
-.veil{position:fixed;inset:0;z-index:60;background:rgba(60,50,35,.18);display:grid;place-items:center;padding:20px}
-.veil[hidden]{display:none}
-.sheet{width:min(440px,100%);padding:18px 20px 16px;transform:rotate(-.6deg);max-height:90vh;overflow:auto}
-.sheet h2{margin:0 0 4px;font-family:"Caveat",cursive;font-size:34px;line-height:1}
-.sheet p{margin:4px 0 12px;font-size:17px;opacity:.75;line-height:1.25}
-.sheet h3{margin:14px 0 6px;font-size:19px}
-.sheet .row{display:flex;gap:10px;flex-wrap:wrap}
-.btn{font-size:18px;padding:6px 14px;border:2px solid var(--ink);border-radius:255px 14px 225px 14px/14px 225px 14px 255px;background:#fffdf6}
-.btn:hover,.btn:focus-visible{background:var(--hi)}
-.btn.primary{background:var(--hi)}
-.sheet textarea{width:100%;height:86px;margin-top:8px;font:14px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:rgba(255,255,255,.7);border:1.5px dashed rgba(43,42,47,.55);border-radius:8px;padding:8px;resize:vertical}
-.sheet .x{position:absolute;right:12px;top:8px;font-size:26px;opacity:.6}
-.sheet .msg{min-height:22px;margin-top:8px;font-size:17px}
-/* toast: a taped paper note */
-#toast{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translate(-50%,20px) rotate(-1.2deg);opacity:0;z-index:50;background:#fffbe6;border:2px solid var(--ink);
-  border-radius:14px 4px 16px 4px/4px 16px 4px 14px;padding:10px 18px;font-size:19px;display:flex;gap:14px;align-items:center;transition:.3s;pointer-events:none;max-width:90vw;box-shadow:3px 4px 0 rgba(43,42,47,.14)}
-#toast::before{content:"";position:absolute;left:50%;top:-12px;width:70px;height:22px;margin-left:-35px;background:rgba(222,208,170,.75);transform:rotate(-3deg);border-left:1px dashed rgba(0,0,0,.12);border-right:1px dashed rgba(0,0,0,.12)}
-#toast.show{opacity:1;transform:translate(-50%,0) rotate(-1.2deg);pointer-events:auto}
-#toast button{font-weight:700;text-decoration:underline;text-decoration-style:wavy;text-underline-offset:4px;color:#2357c4}
+#editBar .k{font-size:13px;font-weight:800;opacity:.6;white-space:nowrap}
+#editBar textarea{flex:1;min-width:0;resize:none;overflow:hidden;height:36px;line-height:34px;white-space:nowrap;font:800 19px "Nunito",system-ui,sans-serif;color:var(--ink);background:transparent;border:0;border-bottom:2px solid rgba(15,44,71,.18);outline:none;padding:0 2px;caret-color:#1d7fe0}
+#editBar .btn{padding:6px 14px;font-size:15px}
+#editBar .cx{font-size:24px;opacity:.5;padding:0 4px}
+#zoomHint{position:fixed;right:12px;top:calc(74px + env(safe-area-inset-top));z-index:20;font-size:13px;font-weight:800;padding:6px 12px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .3s}
+#zoomHint.on{opacity:1;pointer-events:auto}
 
-/* completed view: a notebook page */
-#doneView{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:auto;z-index:10;padding:14px 18px 60px}
+/* backup sheet */
+.veil{position:fixed;inset:0;z-index:60;background:rgba(10,40,70,.25);display:grid;place-items:center;padding:20px}
+.veil[hidden]{display:none}
+.sheet{width:min(440px,100%);padding:20px 22px 18px;max-height:90vh;overflow:auto;background:rgba(255,255,255,.62)}
+.sheet h2{margin:0 0 4px;font-size:24px;font-weight:900}
+.sheet p{margin:4px 0 12px;font-size:15px;opacity:.75;line-height:1.35}
+.sheet h3{margin:14px 0 6px;font-size:15px;font-weight:900}
+.sheet .row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-size:15px;font-weight:800;padding:8px 16px;border-radius:99px;background:rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(15,60,110,.15)}
+.btn:hover,.btn:focus-visible{background:#fff}
+.btn.primary{background:linear-gradient(#3aa0f3,#1b7fdc);color:#fff}
+.sheet textarea{width:100%;height:86px;margin-top:8px;font:13px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:rgba(255,255,255,.7);border:1px solid rgba(15,44,71,.2);border-radius:12px;padding:8px;resize:vertical}
+.sheet .x{position:absolute;right:14px;top:10px;font-size:26px;opacity:.5}
+.sheet .msg{min-height:22px;margin-top:8px;font-size:15px;font-weight:700}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(70px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;z-index:50;padding:10px 18px;border-radius:18px;font-size:15px;font-weight:800;display:flex;gap:14px;align-items:center;transition:.3s;pointer-events:none;max-width:90vw;background:rgba(255,255,255,.78)}
+#toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{font-weight:900;color:#1b7fdc}
+
+/* completed view */
+#doneView{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;bottom:0;overflow:auto;z-index:10;padding:14px 16px 60px}
 #doneView[hidden]{display:none}
-.dwrap{max-width:720px;margin:0 auto;padding:20px 22px 30px 64px;position:relative;
-  background:linear-gradient(90deg,transparent 46px,rgba(214,70,70,.45) 46px,rgba(214,70,70,.45) 48px,transparent 48px),repeating-linear-gradient(#fdfaf2 0 33px,rgba(70,110,190,.22) 33px 34px);
-  border:1.5px solid rgba(43,42,47,.5);border-radius:3px 6px 4px 8px;box-shadow:3px 5px 0 rgba(43,42,47,.12),0 10px 30px rgba(90,70,40,.15);transform:rotate(-.4deg)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
-.stat{padding:8px;text-align:center;border:2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:rgba(255,255,255,.5)}
-.stat:nth-child(2){transform:rotate(.8deg)}.stat:nth-child(3){transform:rotate(-.6deg)}
-.stat b{display:block;font-family:"Caveat",cursive;font-size:40px;line-height:1}
-.stat span{font-size:16px;opacity:.75}
-.week{display:flex;gap:10px;align-items:flex-end;height:96px;padding:10px 12px 4px;margin-bottom:22px;border-bottom:2px solid var(--ink)}
-.week div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;font-size:15px}
-.week i{display:block;width:62%;max-width:28px;min-height:3px;border:1.6px solid var(--ink);border-bottom:0;border-radius:3px 6px 0 0;
-  background:repeating-linear-gradient(45deg,rgba(43,42,47,.75) 0 1.3px,transparent 1.3px 5px)}
-.week div.t{font-weight:700}
-.week div.t i{background:repeating-linear-gradient(45deg,rgba(43,42,47,.8) 0 1.3px,transparent 1.3px 5px),var(--hi)}
-.day{margin-bottom:20px}
-.day h3{margin:0 0 4px;font-family:"Caveat",cursive;font-size:30px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
-.day h3 span{opacity:.6;font-family:"Patrick Hand",cursive;font-size:17px;font-weight:400}
-.item{display:flex;align-items:center;gap:12px;min-height:34px;padding:2px 0;animation:fadein .4s both}
-@keyframes fadein{from{opacity:0;transform:translateX(-6px)}}
-.tick{flex:none;width:30px;font-family:"Caveat",cursive;font-size:32px;font-weight:700;line-height:1;color:hsl(var(--h),45%,34%);text-align:center}
-.item .tx{flex:1;min-width:0;overflow-wrap:anywhere;font-family:"Caveat",cursive;font-size:25px;font-weight:600;line-height:1.05}
-.chip{font-family:"Patrick Hand",cursive;font-size:14px;padding:0 8px;margin-left:6px;display:inline-block;color:hsl(var(--h),45%,32%);border:1.5px solid hsl(var(--h),40%,40%);border-radius:50% 42% 55% 45%/55% 48% 52% 45%;vertical-align:3px}
-.when{font-size:15px;opacity:.6;white-space:nowrap}
-.item .undo{opacity:.55;padding:2px 8px;font-size:20px}
+.dwrap{max-width:720px;margin:0 auto;padding:18px 20px 26px;background:rgba(255,255,255,.55);border-radius:26px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.stat{padding:12px 8px;text-align:center;border-radius:18px;background:rgba(255,255,255,.65);box-shadow:inset 0 1px 0 #fff}
+.stat b{display:block;font-size:30px;font-weight:900;line-height:1.05}
+.stat span{font-size:12px;font-weight:800;opacity:.65}
+.week{display:flex;gap:10px;align-items:flex-end;height:96px;padding:10px 12px 6px;margin-bottom:18px;border-radius:18px;background:rgba(255,255,255,.45)}
+.week div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:12px;font-weight:800}
+.week i{display:block;width:62%;max-width:26px;min-height:4px;border-radius:99px;background:linear-gradient(#7cc8ff,#2a8ae6)}
+.week div.t i{background:linear-gradient(#ffe27a,#ffb02e)}
+.day{margin-bottom:18px}
+.day h3{margin:0 0 6px;font-size:18px;font-weight:900;display:flex;justify-content:space-between;align-items:baseline}
+.day h3 span{opacity:.55;font-size:13px}
+.item{display:flex;align-items:center;gap:12px;padding:9px 10px;margin-bottom:6px;border-radius:16px;background:rgba(255,255,255,.6);animation:fadein .4s both}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}}
+.tick{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  background:radial-gradient(circle at 32% 28%,#fff 0 9%,transparent 22%),conic-gradient(from 200deg,hsl(var(--h),90%,70%),hsl(calc(var(--h) + 120),90%,72%),hsl(calc(var(--h) + 240),90%,70%),hsl(var(--h),90%,70%));box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+.item .tx{flex:1;min-width:0;overflow-wrap:anywhere;font-size:16px;font-weight:800;line-height:1.2}
+.chip{font-size:11px;font-weight:800;padding:1px 9px;margin-left:6px;display:inline-block;border-radius:99px;color:hsl(var(--h),55%,28%);background:hsla(var(--h),80%,75%,.45);vertical-align:2px}
+.when{font-size:12px;font-weight:700;opacity:.6;white-space:nowrap}
+.item .undo{opacity:.5;padding:2px 8px;font-size:18px}
 .item .undo:hover{opacity:1}
-.empty{text-align:center;opacity:.8;padding:40px 10px;font-family:"Caveat",cursive;font-size:28px;line-height:1.2;white-space:pre-line}
+.empty{text-align:center;opacity:.8;padding:40px 10px;font-size:17px;font-weight:800;line-height:1.4;white-space:pre-line}
 
 @media (max-width:640px){
   .tools{left:50%;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);flex-direction:row}
-  .tools .sep{width:0;height:auto;border-top:0;border-left:1.5px dashed rgba(43,42,47,.45);margin:8px 2px}
+  .tools .sep{width:1px;height:auto;margin:8px 2px}
   .tools button .tip{display:none}
-  #help{bottom:calc(86px + env(safe-area-inset-bottom));padding:0 20px;font-size:15px}
+  #help{bottom:calc(86px + env(safe-area-inset-bottom));padding:0 20px;font-size:12px}
   #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
-  .dwrap{padding:14px 12px 24px 54px}
+  .dwrap{padding:14px 12px 22px}
 }
 </style>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
 <header class="top">
-  <nav class="tabs sk">
+  <nav class="tabs glass">
     <button data-tab="bubbles" class="on">Bubbles</button>
     <button data-tab="done">Completed<span class="n" id="doneCount">0</span></button>
   </nav>
 </header>
 
-<aside class="tools sk" id="tools">
+<aside class="tools glass" id="tools">
   <button data-tool="cursor" aria-pressed="true" aria-label="Cursor">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 7-6 2-2 6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="tip">Cursor · V</span></button>
   <button data-tool="pin" aria-pressed="false" aria-label="Pin: pop bubbles">
@@ -175,49 +163,25 @@ body.pin.hasmouse #pin{display:block}
 
 <main id="stage"><canvas id="foam"></canvas><div id="world"></div></main>
 <div id="help"></div>
-<svg class="mug" viewBox="0 0 150 155" overflow="visible" fill="none" stroke="#2b2a2f" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <defs><pattern id="mh" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v5" stroke="#2b2a2f" stroke-width="1" stroke-opacity=".35"/></pattern></defs>
-  <!-- coffee ring left on the paper where the mug stood before -->
-  <circle cx="34" cy="128" r="22" stroke="#8c6437" stroke-opacity=".16" stroke-width="5"/>
-  <circle cx="34.5" cy="127.5" r="22.5" stroke="#8c6437" stroke-opacity=".22" stroke-width="1.3"/>
-  <path d="M14 136c-2-3-3-6-3-9" stroke="#8c6437" stroke-opacity=".2" stroke-width="2.5"/>
-  <!-- steam -->
-  <path class="steam" d="M58 40c-7-8 6-12-1-21s4-12 1-17" stroke-width="1.6" stroke-opacity=".55"/>
-  <path class="steam" d="M78 42c-6-9 7-12 0-22s5-11 2-16" stroke-width="1.6" stroke-opacity=".5"/>
-  <!-- body, drawn twice for a pencil feel -->
-  <path d="M33 56c1 22 2 44 6 64 2 9 13 14 30 14s28-5 30-14c4-20 5-42 6-64" stroke-width="2.2" fill="#fbf9f3" fill-opacity=".7"/>
-  <path d="M34.5 58c.6 21 2.4 42 6 61.5 2.4 8 13 12.7 28.6 12.6 16-.2 26.3-4.7 28.2-13.2 3.6-19.5 5-40.5 5.6-61" stroke-width="1" stroke-opacity=".45"/>
-  <!-- shading on the right side -->
-  <path d="M86 62c-.5 21-2 40-5 58 7-2 12-4 13-8 3-17 4.5-34 5.2-52z" fill="url(#mh)" stroke="none"/>
-  <!-- rim + coffee -->
-  <ellipse cx="69" cy="56" rx="36" ry="9" stroke-width="2.2" fill="#fbf9f3"/>
-  <path d="M35.5 55.5c4 5.5 18 8.5 34 8.4 15-.1 28.8-3.3 33.8-8.6" stroke-width="1" stroke-opacity=".45"/>
-  <ellipse cx="69" cy="57.5" rx="29" ry="5.6" stroke-width="1.3" fill="url(#mh)"/>
-  <!-- handle -->
-  <path d="M104 70c14-4 24 2 23 15-1 14-12 21-26 22" stroke-width="2.2"/>
-  <path d="M103 79c9-3 15 1 14.5 7.5-.6 7-6.5 11-15 12" stroke-width="1.8"/>
-  <path d="M105 72c12-3 20 3 19.5 13.5" stroke-width="1" stroke-opacity=".45"/>
-  <!-- a little doodle on the mug -->
-  <path d="M55 92c4-7 12-7 14 0 2-7 10-7 14 0-2 8-14 15-14 15s-12-7-14-15z" stroke-width="1.4" stroke-opacity=".7"/>
-  <!-- base shadow scribble -->
-  <path d="M38 138c16 4 46 4 64-1" stroke-width="1.2" stroke-opacity=".35"/>
-</svg>
+
 
 
 <section id="doneView" hidden><div class="dwrap" id="doneInner"></div></section>
 
 
-<div id="pin"><svg viewBox="0 0 48 48" fill="none" stroke="#2b2a2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M24 46.5V30.5"/><path d="M23.4 45l1.2-14"/>
-  <path d="M12.5 27.8c7-1.6 16-1.4 23 .2" fill="#e8635d" fill-opacity=".8"/>
-  <path d="M16.2 26.6l2.4-12.8h11l2.4 12.7" fill="#e8635d" fill-opacity=".8"/>
-  <path d="M14.3 6.6c6.3-.9 13-.8 19.3.2.6 2.6.5 5-.2 7.2-6.3.6-12.6.6-18.9-.1-.7-2.4-.8-4.8-.2-7.3z" fill="#e8635d" fill-opacity=".85"/>
-  <path d="M19 9.6h4" stroke-opacity=".5"/><path d="M20 18l-.8 7M23 18l-.4 7" stroke-width="1" stroke-opacity=".5"/></svg></div>
+<div id="pin"><svg viewBox="0 0 48 48">
+  <defs><linearGradient id="needle" x1="0" x2="1"><stop offset="0" stop-color="#8d96a3"/><stop offset=".45" stop-color="#f4f6f9"/><stop offset="1" stop-color="#6b7480"/></linearGradient>
+  <radialGradient id="head" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".45" stop-color="#e3262f"/><stop offset="1" stop-color="#8e0f17"/></radialGradient></defs>
+  <path d="M23 29h2l-.6 17.5h-.8z" fill="url(#needle)"/>
+  <ellipse cx="24" cy="27.5" rx="12" ry="3.2" fill="url(#head)"/>
+  <path d="M16.5 26.5l2.6-12.5h9.8l2.6 12.5z" fill="url(#head)"/>
+  <rect x="14" y="5.5" width="20" height="9.5" rx="4.7" fill="url(#head)"/>
+  <ellipse cx="19.5" cy="8.6" rx="3.6" ry="1.6" fill="#fff" opacity=".7"/></svg></div>
 
-<div id="editBar" class="sk" hidden><span class="k" id="ebKind">New task</span><textarea id="ebInput" rows="1" maxlength="120" enterkeyhint="done" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" aria-label="Bubble text"></textarea><button class="cx" id="ebCancel" aria-label="Cancel">×</button><button class="btn primary" id="ebDone">Done</button></div>
-<button id="zoomHint" class="sk">reset zoom</button>
+<div id="editBar" class="glass" hidden><span class="k" id="ebKind">New task</span><textarea id="ebInput" rows="1" maxlength="120" enterkeyhint="done" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" aria-label="Bubble text"></textarea><button class="cx" id="ebCancel" aria-label="Cancel">×</button><button class="btn primary" id="ebDone">Done</button></div>
+<button id="zoomHint" class="glass">reset zoom</button>
 <div class="veil" id="backup" hidden>
-  <div class="sheet sk" role="dialog" aria-labelledby="bkTitle" style="position:relative">
+  <div class="sheet glass" role="dialog" aria-labelledby="bkTitle" style="position:relative">
     <button class="x" id="bkClose" aria-label="Close">×</button>
     <h2 id="bkTitle">Backup &amp; restore</h2>
     <p>Your bubbles live on this device. Save a backup here, then restore it on your phone (or anywhere else).</p>
@@ -377,65 +341,129 @@ function clipSide(g,n,bx,by,bh){       // clip to n's side of wall g, within the
   else{ctx.rect(bx-bh,by-bh,2*bh,2*bh);ctx.moveTo(g.wx+g.r3,g.wy);ctx.arc(g.wx,g.wy,g.r3,0,TAU);ctx.clip('evenodd')}
 }
 
-/* =================== pencil sketch helpers =================== */
-const INK='43,42,47';
+/* =================== sunny sky =================== */
 const hueOf=n=>n.kind==='task'?(groupOf(n)?.hue??n.hue??200):n.hue;
 function seedOf(n){if(n._seed==null){let h=2166136261;for(const c of String(n.id))h=Math.imul(h^c.charCodeAt(0),16777619);n._seed=(h>>>0)/4294967295}return n._seed}
-const rnd=(a,b)=>{const x=Math.sin(a*127.1+b*311.7)*43758.5453;return x-Math.floor(x)};   // stable pseudo-random
-// one wobbly hand-drawn circle stroke: stable per bubble, overshoots where the pencil starts and ends
-function sketchRing(x,y,r,seed,pass,width,alpha,col){
-  const p1=seed*44+pass*1.7,p2=seed*91+pass*2.9,p3=seed*13+pass*.7,amp=1+r*.014;
-  const a0=(seed*7+pass*2.4)%1*TAU,sweep=TAU*(1.05+rnd(seed,pass)*.09),N=Math.max(30,Math.round(r*.5));
-  ctx.beginPath();
-  for(let i=0;i<=N;i++){
-    const a=a0+sweep*i/N,rr=r+(Math.sin(a*2+p1)*.9+Math.sin(a*3+p2)*.55+Math.sin(a*5+p3)*.3)*amp+(pass-.6)*.9;
-    const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+// value noise + fractal noise (deterministic, used for clouds and the soap film's swirls)
+function h2(x,y,s){let h=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,1442695041)|0;h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295}
+function vnoise(x,y,s){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+  const a=h2(xi,yi,s),b=h2(xi+1,yi,s),c=h2(xi,yi+1,s),d=h2(xi+1,yi+1,s);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+function fbm(x,y,s,o){let t=0,a=.5,f=1,n=0;for(let i=0;i<o;i++){t+=a*vnoise(x*f,y*f,s+i*17);n+=a;f*=2.03;a*=.5}return t/n}
+const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
+const skyC=$('#sky'),sk=skyC.getContext('2d');
+let ENV=null;const ENVN=96;               // a small copy of the scene that the bubbles reflect
+const SUN={x:.8,y:.12};
+function renderSky(){
+  const W=innerWidth,H=innerHeight,q=Math.min(1.5,devicePixelRatio||1);
+  skyC.width=Math.round(W*q);skyC.height=Math.round(H*q);
+  const g=sk;g.setTransform(q,0,0,q,0,0);
+  const hz=H*(W<640?.80:.76),m=Math.max(W,H),sx=W*SUN.x,sy=H*SUN.y;
+  // sky
+  let lg=g.createLinearGradient(0,0,0,hz);
+  lg.addColorStop(0,'#1d6cc7');lg.addColorStop(.42,'#4b9ee6');lg.addColorStop(.82,'#a7d5f6');lg.addColorStop(1,'#eef4ee');
+  g.fillStyle=lg;g.fillRect(0,0,W,hz+2);
+  // warm air around the sun
+  let rg=g.createRadialGradient(sx,sy,0,sx,sy,m*.75);rg.addColorStop(0,'rgba(255,246,214,.75)');rg.addColorStop(.25,'rgba(255,238,200,.28)');rg.addColorStop(1,'rgba(255,238,200,0)');
+  g.fillStyle=rg;g.fillRect(0,0,W,hz);
+  // clouds: fractal noise rendered small, then scaled up so they come out soft
+  const cw=Math.round(Math.min(320,W/3)),chh=Math.round(cw*hz/W),cc=document.createElement('canvas');cc.width=cw;cc.height=chh;
+  const cx=cc.getContext('2d'),im=cx.createImageData(cw,chh),D=im.data;
+  for(let y=0;y<chh;y++){const fy=y/chh,band=smooth(.22,.55,fy)*(1-smooth(.92,1,fy))*.9+.1*smooth(.0,.2,fy);
+    for(let x=0;x<cw;x++){const fx=x/cw,nx=fx*4.2,ny=fy*4.2*(hz/W)*2.2;
+      const n=fbm(nx,ny,11,6),dens=smooth(.5,.7,n*(.55+band*.6));if(dens<=0)continue;
+      const under=smooth(0,.12,fbm(nx,ny+.06,11,6)-n+.04);           // shaded undersides
+      const warm=Math.max(0,1-Math.hypot(fx-SUN.x,fy*hz/H-SUN.y)*1.8);
+      const i=(y*cw+x)*4;D[i]=255-under*48;D[i+1]=255-under*38-warm*4;D[i+2]=255-under*20-warm*22;D[i+3]=Math.min(1,dens*1.15)*235}}
+  cx.putImageData(im,0,0);g.imageSmoothingQuality='high';g.drawImage(cc,0,0,W,hz);
+  // the sun
+  rg=g.createRadialGradient(sx,sy,0,sx,sy,m*.18);rg.addColorStop(0,'rgba(255,255,248,1)');rg.addColorStop(.12,'rgba(255,252,232,.95)');rg.addColorStop(.35,'rgba(255,240,190,.35)');rg.addColorStop(1,'rgba(255,240,190,0)');
+  g.fillStyle=rg;g.fillRect(sx-m*.2,sy-m*.2,m*.4,m*.4);
+  {// faint camera streaks, drawn small and scaled up so they come out soft
+    const rw=Math.round(W/10),rh=Math.round(H/10),rc=document.createElement('canvas');rc.width=rw;rc.height=rh;const r=rc.getContext('2d');
+    r.translate(sx/10,sy/10);r.globalCompositeOperation='lighter';
+    for(let i=0;i<14;i++){r.rotate(TAU/14+(h2(i,3,9)-.5)*.25);const L=m/10*(.14+h2(i,5,9)*.24);
+      const rl=r.createLinearGradient(0,0,L,0);rl.addColorStop(0,'rgba(255,250,228,.11)');rl.addColorStop(1,'rgba(255,250,228,0)');
+      r.fillStyle=rl;r.beginPath();r.moveTo(0,0);r.lineTo(L,-L*.03);r.lineTo(L,L*.03);r.fill()}
+    g.save();g.globalCompositeOperation='lighter';g.drawImage(rc,0,0,W,H);g.restore()}
+  // a soft, out-of-focus meadow and tree line (drawn small and scaled up for a shallow depth of field)
+  const lw=Math.round(W/5),lh=Math.round(H/5),lc=document.createElement('canvas');lc.width=lw;lc.height=lh;const l=lc.getContext('2d');
+  const hzl=hz/5;
+  l.fillStyle='#3e6f3b';l.beginPath();l.moveTo(0,lh);
+  for(let x=0;x<=lw;x+=2){l.lineTo(x,hzl-(3+fbm(x*.06,1,5,4)*10+fbm(x*.25,2,6,2)*3))}
+  l.lineTo(lw,lh);l.fill();
+  lg=l.createLinearGradient(0,hzl,0,lh);lg.addColorStop(0,'#86bf5a');lg.addColorStop(.35,'#5f9e3e');lg.addColorStop(1,'#2f6624');
+  l.fillStyle=lg;l.fillRect(0,hzl+1,lw,lh);
+  for(let i=0;i<70;i++){                                   // sunlit bokeh in the grass and trees
+    const bx=h2(i,1,3)*lw,by=hzl-6+h2(i,2,3)*(lh-hzl+6),br=1+h2(i,4,3)*4.5;
+    const bg=l.createRadialGradient(bx,by,0,bx,by,br);const a=.15+h2(i,6,3)*.35,warm=h2(i,7,3)>.6;
+    bg.addColorStop(0,warm?`rgba(255,244,190,${a})`:`rgba(205,240,150,${a})`);bg.addColorStop(1,'rgba(205,240,150,0)');l.fillStyle=bg;l.fillRect(bx-br,by-br,br*2,br*2)}
+  g.drawImage(lc,0,0,W,H);
+  // haze where the land meets the sky
+  lg=g.createLinearGradient(0,hz-H*.06,0,hz+H*.05);lg.addColorStop(0,'rgba(235,245,250,0)');lg.addColorStop(.5,'rgba(235,245,250,.45)');lg.addColorStop(1,'rgba(235,245,250,0)');
+  g.fillStyle=lg;g.fillRect(0,hz-H*.06,W,H*.11);
+  // lens flare ghosts along the line from the sun through the middle of the screen
+  g.save();g.globalCompositeOperation='lighter';
+  [[.35,.05,'255,220,160',.10],[.62,.025,'170,220,255',.12],[.85,.07,'200,255,210',.06],[1.15,.04,'255,200,240',.08],[1.35,.012,'255,255,255',.18]].forEach(([t,r,c,a])=>{
+    const fx=sx+(W/2-sx)*t*1.4,fy=sy+(H/2-sy)*t*1.4,R=m*r;const fg=g.createRadialGradient(fx,fy,0,fx,fy,R);
+    fg.addColorStop(0,`rgba(${c},${a*.6})`);fg.addColorStop(.8,`rgba(${c},${a})`);fg.addColorStop(1,`rgba(${c},0)`);g.fillStyle=fg;g.fillRect(fx-R,fy-R,2*R,2*R)});
+  g.restore();
+  // gentle vignette
+  rg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.45,W/2,H/2,m*.85);rg.addColorStop(0,'rgba(0,30,60,0)');rg.addColorStop(1,'rgba(0,30,60,.18)');
+  g.fillStyle=rg;g.fillRect(0,0,W,H);
+  // small copy for reflections
+  const ec=document.createElement('canvas');ec.width=ec.height=ENVN;const e=ec.getContext('2d');e.drawImage(skyC,0,0,ENVN,ENVN);
+  ENV=e.getImageData(0,0,ENVN,ENVN).data;
+  for(const k in filmCache)delete filmCache[k];wake(4);
+}
+
+/* =================== soap film =================== */
+// Each bubble is drawn from a pre-computed image: what a thin soap film shows is the scene it reflects,
+// tinted by thin-film interference (colour depends on film thickness, which drains thicker towards the
+// bottom and swirls), and much stronger at grazing angles near the rim (Fresnel), so the middle stays clear.
+const FS=288,filmCache={};
+function filmSprite(h,v,isC){
+  const key=h+'|'+v+'|'+(isC?1:0);if(filmCache[key])return filmCache[key];
+  const c=document.createElement('canvas');c.width=c.height=FS;const g=c.getContext('2d'),im=g.createImageData(FS,FS),D=im.data;
+  const seed=(v*131+Math.round(h))|0,base=isC?300:150+(((h*2.7)%360)/360)*330;
+  for(let py=0;py<FS;py++)for(let px=0;px<FS;px++){
+    const x=(px+.5)/FS*2-1,y=(py+.5)/FS*2-1,r2=x*x+y*y;if(r2>=1)continue;
+    const z=Math.sqrt(1-r2);
+    // reflected view ray -> where it lands in the scene (a fisheye view of the sky, sun and meadow)
+    const rx=2*z*x,ry=2*z*y,eu=Math.min(ENVN-1,Math.max(0,(.5+rx*.48)*ENVN)),ev=Math.min(ENVN-1,Math.max(0,(.5+ry*.48)*ENVN));
+    const ei=((ev|0)*ENVN+(eu|0))*4,er=ENV?ENV[ei]:180,eg=ENV?ENV[ei+1]:210,eb=ENV?ENV[ei+2]:240;
+    // Fresnel: a soap film reflects ~4% head-on and nearly everything at the rim
+    const F=.02+.98*Math.pow(1-z,5),R=Math.min(.92,2*F/(1+F)+.012);
+    // film thickness (nm): drains towards the bottom, swirled by convection
+    const wx=x*1.7+(fbm(x*1.4+seed,y*1.4,seed,3)-.5)*2.2,wy=y*1.7+(fbm(x*1.4,y*1.4+seed,seed+5,3)-.5)*2.2;
+    const d=Math.max(0,base+300*Math.pow((y+1)/2,1.4)+(fbm(wx,wy,seed+9,4)-.5)*340);
+    const sT=Math.sqrt(1-z*z)/1.33,opd=2*1.33*d*Math.sqrt(1-sT*sT);
+    const fr=Math.sin(Math.PI*opd/650)**2,fg=Math.sin(Math.PI*opd/532)**2,fb=Math.sin(Math.PI*opd/460)**2;
+    const k=isC?1.9:1.75,i=(py*FS+px)*4;
+    D[i]=Math.min(255,er*(.32+k*fr));D[i+1]=Math.min(255,eg*(.32+k*fg));D[i+2]=Math.min(255,eb*(.32+k*fb));
+    let a=R;const rr=Math.sqrt(r2);if(rr>.986)a*=(1-rr)/.014;D[i+3]=a*255;
   }
-  ctx.strokeStyle=`rgba(${col||INK},${alpha})`;ctx.lineWidth=width;ctx.stroke();
+  g.putImageData(im,0,0);return filmCache[key]=c;
 }
-// shading: diagonal pencil hatching in a crescent on the lower right (the bubble's shadow side)
-function hatchCrescent(n,seed,h){
-  const x=n.x,y=n.y,r=n.rr;
-  ctx.save();
-  ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.moveTo(x-r*.17+r*.88,y-r*.19);ctx.arc(x-r*.17,y-r*.19,r*.88,0,TAU);ctx.clip('evenodd');
-  ctx.lineWidth=.85;ctx.strokeStyle=`hsla(${h},30%,32%,.30)`;
-  ctx.beginPath();
-  for(let d=-2*r,i=0;d<2*r;d+=6.5,i++){const j=(rnd(seed,i)-.5)*2;ctx.moveTo(x+d-r+j,y+r);ctx.lineTo(x+d+r,y-r+j*.6)}
-  ctx.stroke();
-  // cross-hatch the darkest edge
-  ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.moveTo(x-r*.12+r*.95,y-r*.13);ctx.arc(x-r*.12,y-r*.13,r*.95,0,TAU);ctx.clip('evenodd');
-  ctx.strokeStyle=`rgba(${INK},.22)`;ctx.beginPath();
-  for(let d=-2*r,i=0;d<2*r;d+=7,i++){const j=(rnd(seed+3,i)-.5)*2;ctx.moveTo(x+d-r+j,y-r);ctx.lineTo(x+d+r,y+r+j*.6)}
-  ctx.stroke();ctx.restore();
-}
-// the classic cartoon shine: an eraser-white patch and two curved pencil marks top-left
-function shine(n){
-  const x=n.x,y=n.y,r=n.rr;
-  const g=ctx.createRadialGradient(x-r*.42,y-r*.44,0,x-r*.42,y-r*.44,r*.32);
-  g.addColorStop(0,'rgba(255,255,252,.85)');g.addColorStop(1,'rgba(255,255,252,0)');
-  ctx.fillStyle=g;ctx.fillRect(x-r*.8,y-r*.8,r*.8,r*.8);
-  ctx.lineCap='round';ctx.strokeStyle=`rgba(${INK},.62)`;ctx.lineWidth=1.7;
-  ctx.beginPath();ctx.arc(x,y,r*.74,Math.PI*1.07,Math.PI*1.36);ctx.stroke();
-  ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,r*.74,Math.PI*1.42,Math.PI*1.49);ctx.stroke();
-}
+// crisp reflections of the sun and the bright sky (drawn separately so they stay sharp at any size)
+const specSprite=(()=>{
+  const S=512,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+  g.save();g.translate(S*.66,S*.3);g.rotate(.62);                                  // the sun: a bright window
+  let rg=g.createRadialGradient(0,0,0,0,0,S*.09);rg.addColorStop(0,'rgba(255,255,255,1)');rg.addColorStop(.35,'rgba(255,255,250,.95)');rg.addColorStop(1,'rgba(255,255,250,0)');
+  g.scale(1,.62);g.fillStyle=rg;g.beginPath();g.arc(0,0,S*.09,0,TAU);g.fill();g.restore();
+  g.save();g.translate(S*.66,S*.3);rg=g.createRadialGradient(0,0,0,0,0,S*.2);rg.addColorStop(0,'rgba(255,252,235,.35)');rg.addColorStop(1,'rgba(255,252,235,0)');
+  g.fillStyle=rg;g.fillRect(-S*.2,-S*.2,S*.4,S*.4);g.restore();
+  g.save();g.translate(S*.3,S*.74);g.rotate(.62);g.scale(1,.45);                     // faint bounce light from below
+  rg=g.createRadialGradient(0,0,0,0,0,S*.06);rg.addColorStop(0,'rgba(255,255,255,.55)');rg.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=rg;g.beginPath();g.arc(0,0,S*.06,0,TAU);g.fill();g.restore();
+  g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=S*.006;g.beginPath();g.arc(S/2,S/2,S/2-S*.004,0,TAU);g.stroke();  // the bright rim
+  return c;
+})();
 function cellClip(n,pad){
   ctx.beginPath();ctx.arc(n.x,n.y,n.rr+pad,0,TAU);ctx.clip();
   for(const g of geo.G.get(n))clipSide(g,n,n.x,n.y,n.rr+pad+3);
 }
-// a soap-film wall, sketched as two jittery pencil passes
-function sketchWall(g){
-  const pts=[],N=14;
-  if(g.line){for(let i=0;i<=N;i++){const f=i/N;pts.push([g.p1x+(g.p2x-g.p1x)*f,g.p1y+(g.p2y-g.p1y)*f])}}
-  else{const a1=Math.atan2(g.p1y-g.wy,g.p1x-g.wx),a2=Math.atan2(g.p2y-g.wy,g.p2x-g.wx);
-    let da=a2-a1;while(da>Math.PI)da-=TAU;while(da<-Math.PI)da+=TAU;
-    for(let i=0;i<=N;i++){const a=a1+da*i/N;pts.push([g.wx+Math.cos(a)*g.r3,g.wy+Math.sin(a)*g.r3])}}
-  const sd=seedOf(g.a)+seedOf(g.b),nx=-(pts[N][1]-pts[0][1]),ny=pts[N][0]-pts[0][0],nl=Math.hypot(nx,ny)||1;
-  for(let p=0;p<2;p++){
-    ctx.beginPath();
-    pts.forEach(([x,y],i)=>{const o=(Math.sin(i*1.3+sd*50+p*2)*.9+(p-.5)*1.1);const px=x+nx/nl*o,py=y+ny/nl*o;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});
-    ctx.strokeStyle=`rgba(${INK},${p?.4:.75})`;ctx.lineWidth=p?1:1.5;ctx.stroke();
-  }
-}
+addEventListener('resize',()=>{clearTimeout(renderSky._t);renderSky._t=setTimeout(renderSky,150)});
+renderSky();
 
 /* =================== drawing =================== */
 let maxDpr=2,slowFrames=0,uz=1,ux=0,uy=0;const cam={x:0,y:0};
@@ -473,32 +501,32 @@ function draw(t){
   const A=simNodes().filter(n=>n.rr>.8);
   geo=computeGeo(A);
   for(const n of A){
-    const seed=seedOf(n),h=hueOf(n),isC=n===center;
+    const isC=n===center,r=n.rr;
     ctx.save();ctx.globalAlpha=n.dying?Math.min(1,n.rr0/12):1;
-    // inside the cell: a whisper of colour, shading and shine
-    ctx.save();cellClip(n,0);
-    ctx.fillStyle=`hsla(${h},45%,62%,${isC?.03:.06})`;ctx.fillRect(n.x-n.rr,n.y-n.rr,2*n.rr,2*n.rr);
-    ctx.fillStyle='rgba(255,255,252,.5)';ctx.fillRect(n.x-n.rr,n.y-n.rr,2*n.rr,2*n.rr);
-    hatchCrescent(n,seed,h);shine(n);
+    cellClip(n,0);
+    ctx.drawImage(filmSprite(Math.round(hueOf(n)),isC?0:Math.floor(seedOf(n)*4),isC),n.x-r,n.y-r,2*r,2*r);
+    ctx.drawImage(specSprite,n.x-r,n.y-r,2*r,2*r);
+    const hl=(editing&&editing.id===n.id)?'255,255,255':(hover===n&&!isC)?(tool==='pin'?'255,255,255':tool==='erase'?'255,70,80':null):null;
+    if(hl){ctx.strokeStyle=`rgba(${hl},.9)`;ctx.lineWidth=3;ctx.shadowColor=`rgba(${hl},.9)`;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(n.x,n.y,r-2,0,TAU);ctx.stroke();ctx.shadowBlur=0}
+    if(isC&&!state.groups.length){const p=.5+.5*Math.sin(t/400);ctx.strokeStyle=`rgba(255,255,255,${.25+.35*p})`;ctx.lineWidth=2+3*p;ctx.shadowColor='rgba(255,255,255,.9)';ctx.shadowBlur=20;
+      ctx.beginPath();ctx.arc(n.x,n.y,r-1,0,TAU);ctx.stroke();ctx.shadowBlur=0}
     ctx.restore();
-    // the pencil outline (only the part of the rim that is not merged into a neighbour)
-    ctx.save();cellClip(n,6);
-    const hl=(editing&&editing.id===n.id)?'35,87,196':(hover===n&&!isC)?(tool==='pin'?INK:tool==='erase'?'196,40,40':null):null;
-    sketchRing(n.x,n.y,n.rr,seed,0,isC?2.4:1.8,.85);
-    sketchRing(n.x,n.y,n.rr,seed,1,1.1,.45);
-    if(isC)sketchRing(n.x,n.y,n.rr-4,seed,2,1,.35);
-    if(hl){sketchRing(n.x,n.y,n.rr,seed+.37,2,2.8,.9,hl);sketchRing(n.x,n.y,n.rr-3,seed+.61,3,1.6,.6,hl)}
-    if(isC&&!state.groups.length){ctx.setLineDash([6,9]);sketchRing(n.x,n.y,n.rr+12+4*Math.sin(t/300),seed+.2,4,1.4,.5);ctx.setLineDash([])}
-    ctx.restore();ctx.restore();
   }
-  // shared walls between merged bubbles, clipped at triple junctions
+  // shared soap-film walls between merged bubbles, clipped at triple junctions
   for(const g of geo.list){
     ctx.save();
     const wb=g.h+12;
     for(const q of geo.G.get(g.a))if(q!==g)clipSide(q,g.a,g.mx,g.my,wb);
     for(const q of geo.G.get(g.b))if(q!==g)clipSide(q,g.b,g.mx,g.my,wb);
-    ctx.globalAlpha=Math.min(1,g.h/10)*(g.a.dying||g.b.dying?.5:1);
-    sketchWall(g);
+    ctx.beginPath();
+    if(g.line){ctx.moveTo(g.p1x,g.p1y);ctx.lineTo(g.p2x,g.p2y)}
+    else{const a1=Math.atan2(g.p1y-g.wy,g.p1x-g.wx),a2=Math.atan2(g.p2y-g.wy,g.p2x-g.wx);
+      let da=a2-a1;while(da>Math.PI)da-=TAU;while(da<-Math.PI)da+=TAU;ctx.arc(g.wx,g.wy,g.r3,a1,a1+da,da<0)}
+    const fade=Math.min(1,g.h/10)*(g.a.dying||g.b.dying?.5:1);
+    const lg=ctx.createLinearGradient(g.p1x,g.p1y,g.p2x,g.p2y);
+    lg.addColorStop(0,'hsla(300,100%,80%,.6)');lg.addColorStop(.35,'hsla(190,100%,80%,.45)');lg.addColorStop(.7,'hsla(60,100%,78%,.5)');lg.addColorStop(1,'hsla(330,100%,80%,.6)');
+    ctx.globalAlpha=.55*fade;ctx.strokeStyle=lg;ctx.lineWidth=4;ctx.stroke();
+    ctx.globalAlpha=.85*fade;ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.1;ctx.stroke();
     ctx.restore();
   }
 }
@@ -508,7 +536,7 @@ const els=new Map();
 const centerLab=document.createElement('div');centerLab.className='lab center';
 centerLab.innerHTML='<div class="c-wrap"><div class="c-wk"></div><div class="c-day"></div><div class="c-mo"></div><div class="c-stat"></div></div>';
 centerLab.style.width='200px';centerLab.style.transform='translate(-50%,-50%)';world.appendChild(centerLab);
-const hint=document.createElement('div');hint.className='hint';hint.textContent='tap the date to blow your first bubble ✎';world.appendChild(hint);
+const hint=document.createElement('div');hint.className='hint';hint.textContent='Tap the date to blow your first bubble';world.appendChild(hint);
 let frameNo=0;
 function centroids(){
   for(const n of geo.A){
@@ -794,7 +822,7 @@ stage.addEventListener('click',e=>{
   }else if(tool==='pin'){
     if(n===center){toast("The date bubble can't be popped — it's today! 🌤");return}
     if(n.kind==='group'&&state.tasks.some(t=>t.gid===n.id)){n.shakeT=performance.now();toast('Pop the tasks on “'+n.text+'” first');return}
-    pop(n);
+    const [wx,wy]=toWorld(e);pop(n,wx,wy);
   }else if(tool==='erase'){
     if(n===center)return;
     const snap=JSON.stringify({groups:state.groups,tasks:state.tasks},(k,v)=>TRANSIENT.has(k)?undefined:v);
@@ -805,50 +833,48 @@ stage.addEventListener('click',e=>{
 });
 
 /* =================== popping =================== */
-function pop(n){
+function pop(n,hx,hy){
   const g=n.kind==='task'?groupOf(n):null,h=hueOf(n);
   state.done.push({id:uid(),text:n.text,group:g?g.text:'',gid:g?g.id:null,hue:h,kind:n.kind,created:n.created,completed:Date.now()});
   if(n.kind==='task')adopt(n);
   state.groups=state.groups.filter(x=>x!==n);state.tasks=state.tasks.filter(x=>x!==n);
-  dropLabel(n.id);popFx(n,h);popSound();
+  dropLabel(n.id);popFx(n,h,hx??n.x,hy??n.y-n.rr*.5);popSound();
   // the neighbours lose a wall: give them a little kick, like real foam relaxing
   for(const q of live())if(!q.fixed){const dx=q.x-n.x,dy=q.y-n.y,d=Math.hypot(dx,dy)||1;if(d<n.rr+q.rr){q.vx-=dx/d*1.5;q.vy-=dy/d*1.5}}
   paintCenter();save();
 }
-function popFx(n,h){
-  const NS='http://www.w3.org/2000/svg',r=n.rr,S2=r*4;
-  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','popfx');
-  svg.setAttribute('width',S2);svg.setAttribute('height',S2);svg.setAttribute('viewBox',`${-S2/2} ${-S2/2} ${S2} ${S2}`);
-  svg.style.transform=`translate(${n.x-S2/2}px,${n.y-S2/2}px)`;
-  const mk=(tag,attrs)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);svg.appendChild(e);return e};
-  const ink='#2b2a2f',rot0=Math.random()*TAU;
-  // the outline snaps into curved pencil fragments that fly apart
-  for(let i=0;i<7;i++){
-    const a0=rot0+i/7*TAU+Math.random()*.25,a1=a0+.45+Math.random()*.25,mid=(a0+a1)/2;
-    const e=mk('path',{d:`M${Math.cos(a0)*r} ${Math.sin(a0)*r} A${r} ${r} 0 0 1 ${Math.cos(a1)*r} ${Math.sin(a1)*r}`,stroke:ink,'stroke-width':2.2,fill:'none','stroke-linecap':'round'});
-    const dx=Math.cos(mid)*r*.55,dy=Math.sin(mid)*r*.55+8,sp=(Math.random()-.5)*70;
-    e.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${sp}deg)`,opacity:0}],
-      {duration:380+Math.random()*120,easing:'cubic-bezier(.15,.7,.3,1)',fill:'forwards'});
-  }
-  // comic action lines
-  for(let i=0;i<12;i++){
-    const a=rot0+i/12*TAU+(i%2?.12:0),r1=r*(1.05+(i%2)*.08),r2=r*(1.3+(i%3)*.1);
-    const e=mk('path',{d:`M${Math.cos(a)*r1} ${Math.sin(a)*r1} L${Math.cos(a)*r2} ${Math.sin(a)*r2}`,stroke:ink,'stroke-width':2,'stroke-linecap':'round',fill:'none'});
-    const L=r2-r1;e.setAttribute('stroke-dasharray',L);
-    e.animate([{strokeDashoffset:L,opacity:1},{strokeDashoffset:0,opacity:1,offset:.45},{strokeDashoffset:-L,opacity:0}],{duration:420,easing:'ease-out',fill:'forwards'});
-  }
-  // little droplets
-  for(let i=0;i<9;i++){
-    const a=Math.random()*TAU,d=r*(.95+Math.random()*.7),c=mk('circle',{cx:Math.cos(a)*r*.7,cy:Math.sin(a)*r*.7,r:2+Math.random()*3.5,fill:`hsla(${h},40%,60%,.35)`,stroke:ink,'stroke-width':1.3});
-    c.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*(d-r*.7)}px,${Math.sin(a)*(d-r*.7)+20}px)`,opacity:0}],{duration:520+Math.random()*200,easing:'cubic-bezier(.2,.6,.4,1)',fill:'forwards'});
-  }
-  // "POP!"
-  const fs=Math.max(26,Math.min(60,r*.55));
-  const tx=mk('text',{x:0,y:fs*.35,'text-anchor':'middle','font-family':'Caveat, cursive','font-weight':700,'font-size':fs,fill:ink,stroke:'#f2ede1','stroke-width':4,'paint-order':'stroke'});
-  tx.textContent='POP!';
-  tx.animate([{transform:'rotate(-10deg) scale(.3)',opacity:0},{transform:'rotate(-6deg) scale(1.2)',opacity:1,offset:.3},{transform:'rotate(-8deg) scale(1)',opacity:1,offset:.7},{transform:'rotate(-8deg) scale(1.05) translateY(-8px)',opacity:0}],
-    {duration:620,easing:'ease-out',fill:'forwards'});
-  world.appendChild(svg);setTimeout(()=>svg.remove(),760);
+function popFx(n,h,hx,hy){
+  const r=n.rr,pad=r*.9,size=2*(r+pad),q=Math.min(2,(devicePixelRatio||1)*view.s*1.2);
+  const c=document.createElement('canvas');c.className='popc';c.width=Math.ceil(size*q);c.height=Math.ceil(size*q);
+  c.style.width=size+'px';c.style.height=size+'px';c.style.transform=`translate(${n.x-r-pad}px,${n.y-r-pad}px)`;
+  world.appendChild(c);
+  const g=c.getContext('2d');g.scale(q,q);
+  const film=filmSprite(Math.round(h),Math.floor(seedOf(n)*4),false);
+  // where the pin went in, relative to the bubble
+  let ax=hx-n.x,ay=hy-n.y;const al=Math.hypot(ax,ay);if(al>r*.95){ax*=r*.95/al;ay*=r*.95/al}
+  const ang0=Math.atan2(ay,ax),drops=[];
+  for(let i=0;i<70;i++){const a=Math.random()*TAU;let da=Math.abs(((a-ang0+Math.PI)%TAU+TAU)%TAU-Math.PI);
+    drops.push({a,t0:da/Math.PI*60+Math.random()*12,sp:.25+Math.random()*.55,sz:.5+Math.random()*1.8})}
+  const t0=performance.now();
+  (function frame(){
+    const t=performance.now()-t0;g.clearRect(0,0,size,size);
+    // 1. the film: still whole, with a hole that races out from the puncture (~90 ms, as in real life)
+    const hole=Math.pow(Math.min(1,t/90),1.6)*(2.2*r);
+    if(hole<2.1*r){
+      g.save();g.beginPath();g.arc(pad+r,pad+r,r,0,TAU);g.arc(pad+r+ax,pad+r+ay,hole,0,TAU,true);g.clip('evenodd');
+      g.drawImage(film,pad,pad,2*r,2*r);g.drawImage(specSprite,pad,pad,2*r,2*r);
+      // the retreating edge thickens into a bright rim
+      g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2;g.beginPath();g.arc(pad+r+ax,pad+r+ay,hole,0,TAU);g.stroke();g.restore();
+    }
+    // 2. droplets thrown off as the edge sweeps past, falling under gravity
+    for(const d of drops){const tt=t-d.t0;if(tt<0)continue;const life=Math.min(1,tt/520);if(life>=1)continue;
+      const dist=r+tt*d.sp*.55,x=pad+r+Math.cos(d.a)*dist,y=pad+r+Math.sin(d.a)*dist+.00018*tt*tt*r*.6;
+      g.globalAlpha=(1-life)*.95;g.fillStyle='#fff';g.beginPath();g.arc(x,y,d.sz*(1-life*.5),0,TAU);g.fill()}
+    g.globalAlpha=1;
+    // 3. a faint shimmer ring
+    if(t<260){g.strokeStyle=`rgba(255,255,255,${.35*(1-t/260)})`;g.lineWidth=1.5;g.beginPath();g.arc(pad+r,pad+r,r*(1+t/900),0,TAU);g.stroke()}
+    if(t<720)requestAnimationFrame(frame);else c.remove();
+  })();
 }
 let actx=null;
 function popSound(){
@@ -936,7 +962,7 @@ function renderDone(){
   counts.forEach(([d,c],i)=>{const col=el('div',i===6?'t':'');const bar=el('i');bar.style.height=(c?8+c/max*46:4)+'px';bar.style.opacity=c?1:.25;
     col.append(el('span',null,c||''),bar,el('span',null,d.toLocaleDateString(undefined,{weekday:'narrow'})));wk.append(col)});
   root.append(wk);
-  if(!keys.length){root.append(el('div','empty','Nothing popped yet.\nPick the 📌 pin and pop a task bubble — it will land here as your daily log.'));return}
+  if(!keys.length){root.append(el('div','empty','Nothing popped yet.\nPick the pin and pop a task bubble — it will land here as your daily log.'));return}
   keys.forEach(k=>{
     const sec=el('div','day'),h=el('h3'),diff=dayDiff(k,t);
     const label=diff===0?'Today':diff===1?'Yesterday':new Date(k+'T12:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -1052,7 +1078,7 @@ function restoreFrom(txt){
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&window.top===window){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
-window.__bd={get motion(){return motion},get frames(){return frameNo},state,newGroup,newTask,setTool,pop,find,get geo(){return geo},center};
+window.__bd={filmSprite,specSprite,skyC,get motion(){return motion},get frames(){return frameNo},state,newGroup,newTask,setTool,pop,find,get geo(){return geo},center};
 })();
 </script>
 </body>
